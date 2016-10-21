@@ -1,3 +1,10 @@
+"""
+    I do not guarantee the correctness of this commentary, thus it is based only on my personal analysis of the code.
+
+    This file is the Kernel module, it holds the fucntion called when the OK button is pressed.
+
+"""
+
 from abaqus import *
 from abaqusConstants import *
 

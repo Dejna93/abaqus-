@@ -4,6 +4,13 @@
 # Note: thisDir is defined by the Activator class when
 #       this file gets exec'd
 
+"""
+    I do not guarantee the correctness of this commentary, thus it is based only on my personal analysis of the code.
+
+    This file holds the definitions of the gui elements, and the name of the function called when the OK button is clicked.
+
+"""
+
 from rsg.rsgGui import *
 from abaqusConstants import INTEGER, FLOAT
 dialogBox = RsgDialog(title='Title', kernelModule='loadNanoindenterTest', kernelFunction='loadmaterials', includeApplyBtn=False, includeSeparator=True, okBtnText='OK', applyBtnText='Apply', execDir=thisDir)
