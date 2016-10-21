@@ -1,7 +1,7 @@
 from abaqus import *
 from abaqusConstants import *
 
-def loadmaterials():
+def loadmaterials(typowyPar):
     mdb.models['Model-1'].Material('Titanium')
     mdb.models['Model-1'].materials['Titanium'].Density(table=((4500, ), ))
     mdb.models['Model-1'].materials['Titanium'].Elastic(table=((200E9, 0.3), ))
