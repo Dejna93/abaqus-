@@ -2,13 +2,14 @@
 #include <string>
 #include <vector>
 
+//TEMP STRUCT
 struct PointXYZ {
 	float x;
 	float y;
 	float z;
 	
 };
-
+//TEMP STRUCT 
 struct PointXYZS
 {
 	std::string x;
@@ -16,7 +17,7 @@ struct PointXYZS
 	std::string z;
 };
 
-
+//  They will be remove after link with PCL main core
 
 namespace pcl {
 
