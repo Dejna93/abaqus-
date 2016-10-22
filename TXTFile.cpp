@@ -23,7 +23,7 @@ std::vector<PointXYZ> pcl::TXTFile::loadTxtFile(std::string &file_name) {
 
 int pcl::TXTFile::loadFile(std::string &file_name, std::ifstream & file) {
 
-	
+	//FOR DEBUG DELETE IN RELEASE VERSION
 	file_name = "dane.txt";
 	std::cout << "File to open :" << file_name <<"\n";
 	file.open(file_name, std::ios::in);
