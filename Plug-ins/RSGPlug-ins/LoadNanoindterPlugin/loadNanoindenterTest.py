@@ -63,6 +63,24 @@ def loadmaterials(indenter):
         p = mdb.models['Model-1'].parts['Part-1']
         e1 = p.edges
         p.Round(radius=0.1, edgeList=(e1[0], e1[1], e1[3]))
+    elif (indenter == 'Vickers')
+        s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__',
+                                                    sheetSize=200.0)
+        g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
+        s.setPrimaryObject(option=STANDALONE)
+        s.rectangle(point1=(-5.0, 5.0), point2=(5.0, -5.0))
+        p = mdb.models['Model-1'].Part(name='Part-1', dimensionality=THREE_D,
+                                       type=DEFORMABLE_BODY)
+        p = mdb.models['Model-1'].parts['Part-1']
+        p.BaseSolidExtrude(sketch=s, depth=2.020131, draftAngle=-68.0)
+        s.unsetPrimaryObject()
+        p = mdb.models['Model-1'].parts['Part-1']
+        session.viewports['Viewport: 1'].setValues(displayedObject=p)
+        del mdb.models['Model-1'].sketches['__profile__']
+        p = mdb.models['Model-1'].parts['Part-1']
+        e = p.edges
+        p.Round(radius=0.1, edgeList=(e[0], e[1], e[3], e[5]))
+
 
     mdb.models['Model-1'].Material('Titanium')
     mdb.models['Model-1'].materials['Titanium'].Density(table=((4500,),))
