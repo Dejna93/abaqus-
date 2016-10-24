@@ -63,7 +63,7 @@ def loadmaterials(indenter):
         p = mdb.models['Model-1'].parts['Part-1']
         e1 = p.edges
         p.Round(radius=0.1, edgeList=(e1[0], e1[1], e1[3]))
-    elif (indenter == 'Vickers')
+    elif (indenter == 'Vickers'):
         s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__',
                                                     sheetSize=200.0)
         g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
