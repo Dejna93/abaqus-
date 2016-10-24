@@ -11,7 +11,7 @@ from abaqusConstants import *
 
 def loadmaterials(indenter):
 
-    if (indenter == 'indenterKulka'):
+    if (indenter == 'spherical'):
 
         s1 = mdb.models['Model-1'].ConstrainedSketch(name='__profile__',
                                                      sheetSize=200.0)
@@ -37,6 +37,32 @@ def loadmaterials(indenter):
         p = mdb.models['Model-1'].parts['Part-1']
         session.viewports['Viewport: 1'].setValues(displayedObject=p)
         del mdb.models['Model-1'].sketches['__profile__']
+    elif (indenter == 'Berkovich'):
+        s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__',
+                                                    sheetSize=200.0)
+        g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
+        s.setPrimaryObject(option=STANDALONE)
+        session.viewports['Viewport: 1'].view.setValues(nearPlane=182.257,
+                                                        farPlane=194.866, width=55.6457, height=29.4366,
+                                                        cameraPosition=(
+                                                            -0.660534, -0.0390082, 188.562),
+                                                        cameraTarget=(-0.660534, -0.0390082,
+                                                                      0))
+        s.Line(point1=(-5.0, 0.0), point2=(5.0, 0.0))
+        s.HorizontalConstraint(entity=g[2], addUndoState=False)
+        s.Line(point1=(5.0, 0.0), point2=(0.0, 8.660254))
+        s.Line(point1=(0.0, 8.660254), point2=(-5.0, 0.0))
+        p = mdb.models['Model-1'].Part(name='Part-1', dimensionality=THREE_D,
+                                       type=DEFORMABLE_BODY)
+        p = mdb.models['Model-1'].parts['Part-1']
+        p.BaseSolidExtrude(sketch=s, depth=10.8558, draftAngle=-65.27)
+        s.unsetPrimaryObject()
+        p = mdb.models['Model-1'].parts['Part-1']
+        session.viewports['Viewport: 1'].setValues(displayedObject=p)
+        del mdb.models['Model-1'].sketches['__profile__']
+        p = mdb.models['Model-1'].parts['Part-1']
+        e1 = p.edges
+        p.Round(radius=0.1, edgeList=(e1[0], e1[1], e1[3]))
 
     mdb.models['Model-1'].Material('Titanium')
     mdb.models['Model-1'].materials['Titanium'].Density(table=((4500,),))

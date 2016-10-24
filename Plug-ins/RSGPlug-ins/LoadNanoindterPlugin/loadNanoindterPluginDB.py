@@ -15,7 +15,7 @@ from rsg.rsgGui import *
 from abaqusConstants import INTEGER, FLOAT
 dialogBox = RsgDialog(title='Title', kernelModule='loadNanoindenterTest', kernelFunction='loadmaterials', includeApplyBtn=False, includeSeparator=True, okBtnText='OK', applyBtnText='Apply', execDir=thisDir)
 RsgComboBox(name='ComboBox_1', p='DialogBox', text='Text:', keyword='indenter', default='', comboType='STANDARD', repository='', rootText='', rootKeyword='None', layout='')
-RsgListItem(p='ComboBox_1', text='indenterKulka')
+RsgListItem(p='ComboBox_1', text='spherical')
 RsgListItem(p='ComboBox_1', text='Vickers')
 RsgListItem(p='ComboBox_1', text='Berkovich')
 dialogBox.show()
