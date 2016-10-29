@@ -52,7 +52,6 @@ def testFunction():
                 self.indenterImageLabel.configure(image=self.vickersIndenterImage)
             elif self.indenterComboBox.get() == "Berkovich":
                 self.indenterImageLabel.configure(image=self.berkovichIndenterImage)
-            print('kuktas')
 
 
         def steel(self):
