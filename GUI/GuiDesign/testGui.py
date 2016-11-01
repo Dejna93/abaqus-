@@ -4,8 +4,11 @@ import ttk
 # from abaqusConstants import *
 #from django import forms
 
+#execfile("abaqusCommands.py")
+import abaqusCommands
 
-
+import os
+dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 def testFunction():
@@ -15,9 +18,11 @@ def testFunction():
 
             self.v = IntVar()
 
-            self.sphericalIndenterImage = PhotoImage(file="leonardo-da-vinci.ppm")
-            self.vickersIndenterImage = PhotoImage(file="marco-polo.ppm")
-            self.berkovichIndenterImage = PhotoImage(file="Plato-raphael.ppm")
+            self.abaqus = abaqusCommands.AbaqusCommands()
+
+            self.sphericalIndenterImage = PhotoImage(file=dir_path+"/"+"leonardo-da-vinci.ppm")
+            self.vickersIndenterImage = PhotoImage(file=dir_path+"/"+"marco-polo.ppm")
+            self.berkovichIndenterImage = PhotoImage(file=dir_path+"/"+"Plato-raphael.ppm")
             Radiobutton(self.master, text="steel", variable=self.v, value=1, command=self.steel).pack(anchor=W)
             Radiobutton(self.master, text="titanium", variable=self.v, value=2, command=self.titanium).pack(anchor=W)
 
@@ -41,6 +46,8 @@ def testFunction():
             mainloop()
 
         def close_window(self):
+            self.abaqus.setIndenter(self.indenterComboBox.get())
+
             self.master.destroy()
 
 
@@ -71,6 +78,19 @@ def testFunction():
 
 
 
+    class AbaqusCommands:
+        def __init__(self):
+            pass
+
+        def setIndenter(self, indenter):
+            if indenter == 'spherical':
+                pass
+
+            elif indenter == 'Vickers':
+                pass
+
+            elif indenter == 'Berkovich':
+                pass
 
         # Materials = [
         #     ("Steel", "mode"),
