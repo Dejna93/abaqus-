@@ -6,6 +6,7 @@ import ttk
 
 #execfile("abaqusCommands.py")
 import abaqusCommands
+import actualAbaqusCommands
 
 import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -18,7 +19,8 @@ def testFunction():
 
             self.v = IntVar()
 
-            self.abaqus = abaqusCommands.AbaqusCommands()
+            self.abaqus = actualAbaqusCommands.ActualAbaqusCommands()
+            #self.abaqus = abaqusCommands.AbaqusCommands()
 
             self.sphericalIndenterImage = PhotoImage(file=dir_path+"/"+"leonardo-da-vinci.ppm")
             self.vickersIndenterImage = PhotoImage(file=dir_path+"/"+"marco-polo.ppm")
@@ -46,7 +48,8 @@ def testFunction():
             mainloop()
 
         def close_window(self):
-            self.abaqus.setIndenter(self.indenterComboBox.get())
+            self.abaqus.setindenter(self.indenterComboBox.get())
+            #print(self.indenterComboBox.get())
 
             self.master.destroy()
 
