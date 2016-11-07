@@ -42,7 +42,7 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
             s.unsetPrimaryObject()
             p = mdb.models['Model-1'].parts['Part-1']
             e = p.edges
-            if roundingradius != 0:
+            if roundingradius > 0:
                 e = p.edges
                 p.Round(radius=roundingradius, edgeList=(e[0], e[1], e[3], e[5]))
             session.viewports['Viewport: 1'].setValues(displayedObject=p)
@@ -62,7 +62,7 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
             p.BaseShellExtrude(sketch=s1, depth=20.0, draftAngle=65.3)
             s1.unsetPrimaryObject()
             p = mdb.models['Model-1'].parts['Part-1']
-            if roundingradius != 0:
+            if roundingradius > 0:
                 e1 = p.edges
                 p.Round(radius=roundingradius, edgeList=(e1[0], e1[1], e1[3]))
             session.viewports['Viewport: 1'].setValues(displayedObject=p)

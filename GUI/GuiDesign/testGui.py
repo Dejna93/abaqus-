@@ -67,7 +67,7 @@ def testFunction():
                     rounding_value.set(self.previous_rounding_value.get())
                 else:
                     self.previous_rounding_value.set(rounding_value.get())
-                    self.rounding_float_value = rounding_value.get()
+                    self.rounding_float_value = tmp
             except ValueError:
                 rounding_value.set(self.previous_rounding_value.get())
 
