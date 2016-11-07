@@ -63,6 +63,8 @@ class AbaqusInstalator(object):
             if os.path.exists(config.ABAQUS_PLUGINS_DIR):
                 shutil.rmtree(config.ABAQUS_PLUGINS_DIR)
                 shutil.copytree(source, config.ABAQUS_PLUGINS_DIR, ignore=ignore_files)
+            else:
+                shutil.copytree(source, config.ABAQUS_PLUGINS_DIR, ignore=ignore_files)
 
     def get_files(self, dir):
         """The method will check if dir is no empty and return list of files"""
@@ -107,13 +109,13 @@ def main(*args, **kwargs):
     instalator = AbaqusInstalator()
     # print u'Install local'
     # instalator.install_libs(config.INSTALLED_LIBS)
-    print u'Collect local'
-    instalator.collect_libs()
-    print u'Install from local'
-    instalator.install_libs(destiny_path=config.LIBS_BUNDLE)
-    # print u'Move yor plugin into Abaqus dir'
-    # instalator.copy_files(config.PROJECT_PLUGIN, config.ABAQUS_PLUGINS_DIR,
-    #                       flat=kwargs['flat'], ignore_files=config.COPY_IGNORE_FILES)
+    # print u'Collect local'
+    # instalator.collect_libs()
+    # print u'Install from local'
+    # instalator.install_libs(destiny_path=config.LIBS_BUNDLE)
+    print u'Move yor plugin into Abaqus dir'
+    instalator.copy_files(config.PROJECT_PLUGIN, config.ABAQUS_PLUGINS_DIR,
+                          flat=kwargs['flat'], ignore_files=config.COPY_IGNORE_FILES)
 
 
 if __name__ == '__main__':
