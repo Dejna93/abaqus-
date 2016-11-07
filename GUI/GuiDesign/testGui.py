@@ -26,9 +26,9 @@ def testFunction():
             self.abaqus = actualAbaqusCommands.ActualAbaqusCommands()
             # self.abaqus = abaqusCommands.AbaqusCommands()
 
-            self.sphericalIndenterImage = PhotoImage(file=dir_path+"/"+"leonardo-da-vinci.ppm")
-            self.vickersIndenterImage = PhotoImage(file=dir_path+"/"+"marco-polo.ppm")
-            self.berkovichIndenterImage = PhotoImage(file=dir_path+"/"+"Plato-raphael.ppm")
+            self.sphericalIndenterImage = PhotoImage(file=dir_path+"/"+"PrototypSpherical.ppm")
+            self.vickersIndenterImage = PhotoImage(file=dir_path+"/"+"PrototypVickers.ppm")
+            self.berkovichIndenterImage = PhotoImage(file=dir_path+"/"+"PrototypBerkovich.ppm")
             Radiobutton(self.master, text="steel", variable=self.v, value=1, command=self.steel).pack(anchor=W)
             Radiobutton(self.master, text="titanium", variable=self.v, value=2, command=self.titanium).pack(anchor=W)
 
@@ -62,10 +62,13 @@ def testFunction():
 
         def on_rounding_input(self, rounding_value):
             try:
-                self.rounding_float_value = float(rounding_value.get())
-                print(self.rounding_float_value)
-                self.previous_rounding_value.set(rounding_value.get())
-            except:
+                tmp = float(rounding_value.get())
+                if tmp < 0.0:
+                    rounding_value.set(self.previous_rounding_value.get())
+                else:
+                    self.previous_rounding_value.set(rounding_value.get())
+                    self.rounding_float_value = rounding_value.get()
+            except ValueError:
                 rounding_value.set(self.previous_rounding_value.get())
 
 
@@ -76,7 +79,7 @@ def testFunction():
 
         def close_window(self):
             self.abaqus.setindenter(self.indenterComboBox.get(), self.rounding_float_value)
-            #print(self.indenterComboBox.get())
+            # print(self.indenterComboBox.get())
 
             self.master.destroy()
 
