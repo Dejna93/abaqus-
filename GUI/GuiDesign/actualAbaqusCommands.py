@@ -8,7 +8,7 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
     def __init__(self):
         pass
 
-    def setindenter(self, indenter):
+    def setindenter(self, indenter,roundingradius=0):
         if indenter == "spherical":
             s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__',
                                                         sheetSize=200.0)
@@ -41,6 +41,10 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
             p.BaseShellExtrude(sketch=s, depth=20.0, draftAngle=68.0)
             s.unsetPrimaryObject()
             p = mdb.models['Model-1'].parts['Part-1']
+            e = p.edges
+            if roundingradius != 0:
+                e = p.edges
+                p.Round(radius=roundingradius, edgeList=(e[0], e[1], e[3], e[5]))
             session.viewports['Viewport: 1'].setValues(displayedObject=p)
             del mdb.models['Model-1'].sketches['__profile__']
         elif indenter == "Berkovich":
@@ -58,6 +62,9 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
             p.BaseShellExtrude(sketch=s1, depth=20.0, draftAngle=65.3)
             s1.unsetPrimaryObject()
             p = mdb.models['Model-1'].parts['Part-1']
+            if roundingradius != 0:
+                e1 = p.edges
+                p.Round(radius=0.1, edgeList=(e1[0], e1[1], e1[3]))
             session.viewports['Viewport: 1'].setValues(displayedObject=p)
             del mdb.models['Model-1'].sketches['__profile__']
 

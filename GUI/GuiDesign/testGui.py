@@ -6,7 +6,7 @@ import ttk
 
 #execfile("abaqusCommands.py")
 import abaqusCommands
-import actualAbaqusCommands
+#import actualAbaqusCommands
 
 import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -17,10 +17,14 @@ def testFunction():
         def __init__(self):
             self.master = Tk()
 
+            self.rounding_float_value = 0.0
+            self.previous_rounding_value = StringVar()
+            self.previous_rounding_value.set("0.0")
+
             self.v = IntVar()
 
-            self.abaqus = actualAbaqusCommands.ActualAbaqusCommands()
-            #self.abaqus = abaqusCommands.AbaqusCommands()
+            #self.abaqus = actualAbaqusCommands.ActualAbaqusCommands()
+            self.abaqus = abaqusCommands.AbaqusCommands()
 
             self.sphericalIndenterImage = PhotoImage(file=dir_path+"/"+"leonardo-da-vinci.ppm")
             self.vickersIndenterImage = PhotoImage(file=dir_path+"/"+"marco-polo.ppm")
@@ -37,32 +41,68 @@ def testFunction():
             self.indenterComboBox = ttk.Combobox(self.frame, values=self.indenters, textvariable=self.indenters)
             self.indenterImageLabel = ttk.Label(self.frame, image=self.sphericalIndenterImage)
             self.indenterComboBox.current(newindex=0)
-            self.indenterComboBox.bind("<<ComboboxSelected>>", self.changeIndenterImage)
+            self.indenterComboBox.bind("<<ComboboxSelected>>", self.update_gui_on_selected_indenter)
             self.indenterComboBox.pack()
+
+            self.roundingValue = StringVar()
+            self.roundingValue.set("0.0")
+            self.roundingValue.trace("w", lambda name, index, mode, roundingValue=self.roundingValue: self.on_rounding_input(roundingValue))
+
+            self.roundingEntry = ttk.Entry(self.master, textvariable=self.roundingValue)
+            self.indenterRoundingLabel = ttk.Label(self.frame, text="rounding radius:")
             self.indenterImageLabel.image = self.sphericalIndenterImage
             self.indenterImageLabel.pack()
 
-            self.button = Button(self.frame, text="test-close", command=self.close_window)
+            self.button = Button(self.frame, text="done", command=self.close_window)
             self.button.pack()
+
+
 
             mainloop()
 
+        def on_rounding_input(self, rounding_value):
+            try:
+                self.rounding_float_value = float(rounding_value.get())
+                print(self.rounding_float_value)
+                self.previous_rounding_value.set(rounding_value.get())
+            except:
+                rounding_value.set(self.previous_rounding_value.get())
+
+
+
+
+
+
+
         def close_window(self):
-            self.abaqus.setindenter(self.indenterComboBox.get())
+            self.abaqus.setindenter(self.indenterComboBox.get(), self.rounding_float_value)
             #print(self.indenterComboBox.get())
 
             self.master.destroy()
 
 
 
-        def changeIndenterImage(self, event):
+        def update_gui_on_selected_indenter(self, event):
             if self.indenterComboBox.get() == 'spherical':
+                self.button.pack_forget()
+                self.button.grid_forget()
+                self.indenterRoundingLabel.pack_forget()
                 self.indenterImageLabel.configure(image=self.sphericalIndenterImage)
+                self.button.pack()
             elif self.indenterComboBox.get() == "Vickers":
+                self.button.pack_forget()
+                self.button.grid_forget()
+                self.indenterRoundingLabel.pack()
+                self.roundingEntry.pack()
                 self.indenterImageLabel.configure(image=self.vickersIndenterImage)
+                self.button.pack()
             elif self.indenterComboBox.get() == "Berkovich":
+                self.button.pack_forget()
+                self.button.grid_forget()
+                self.indenterRoundingLabel.pack()
+                self.roundingEntry.pack()
                 self.indenterImageLabel.configure(image=self.berkovichIndenterImage)
-
+                self.button.pack()
 
         def steel(self):
             pass
