@@ -64,7 +64,7 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
             p = mdb.models['Model-1'].parts['Part-1']
             if roundingradius != 0:
                 e1 = p.edges
-                p.Round(radius=0.1, edgeList=(e1[0], e1[1], e1[3]))
+                p.Round(radius=roundingradius, edgeList=(e1[0], e1[1], e1[3]))
             session.viewports['Viewport: 1'].setValues(displayedObject=p)
             del mdb.models['Model-1'].sketches['__profile__']
 

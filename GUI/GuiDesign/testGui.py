@@ -6,7 +6,7 @@ import ttk
 
 #execfile("abaqusCommands.py")
 import abaqusCommands
-#import actualAbaqusCommands
+import actualAbaqusCommands
 
 import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -23,8 +23,8 @@ def testFunction():
 
             self.v = IntVar()
 
-            #self.abaqus = actualAbaqusCommands.ActualAbaqusCommands()
-            self.abaqus = abaqusCommands.AbaqusCommands()
+            self.abaqus = actualAbaqusCommands.ActualAbaqusCommands()
+            # self.abaqus = abaqusCommands.AbaqusCommands()
 
             self.sphericalIndenterImage = PhotoImage(file=dir_path+"/"+"leonardo-da-vinci.ppm")
             self.vickersIndenterImage = PhotoImage(file=dir_path+"/"+"marco-polo.ppm")
