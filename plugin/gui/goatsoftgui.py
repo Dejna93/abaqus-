@@ -6,7 +6,6 @@ FONT = ("Times New Roman", 8)
 
 
 class Capp(tk.Tk):
-
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
