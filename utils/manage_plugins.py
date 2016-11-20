@@ -83,6 +83,10 @@ class AbaqusInstalator(object):
         """Wraper for pip install"""
         # if not requirements and not destiny_path:
         #     raise u"InstallLibsError \n requirements and destiny_path can't be empty "
+        try:
+            pip.main(['install', '--upgrade pip', 'pip'])
+        except pip.PipError as e:
+            print e
         if destiny_path:
             zf = ZipFile(os.path.join(config.PROJECT_DIR, 'zipped_libs.zip'))
             zf.extractall(config.LIBS_BUNDLE)
@@ -113,11 +117,9 @@ def main(*args, **kwargs):
     # instalator.collect_libs()
     # print u'Install from local'
     # instalator.install_libs(destiny_path=config.LIBS_BUNDLE)
-    print u'Move yor plugin into Abaqus dir'
-    instalator.copy_files(config.PROJECT_PLUGIN, config.ABAQUS_PLUGINS_DIR,
-                          flat=kwargs['flat'], ignore_files=config.COPY_IGNORE_FILES)
-
-
+    # print u'Move yor plugin into Abaqus dir'
+    # instalator.copy_files(config.PROJECT_PLUGIN, config.ABAQUS_PLUGINS_DIR,
+    #                       flat=kwargs['flat'], ignore_files=config.COPY_IGNORE_FILES)
 if __name__ == '__main__':
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hf:i:c:d", ["flat", 'install', 'copy', 'destiny'])

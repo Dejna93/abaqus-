@@ -1,3 +1,4 @@
+import fnmatch
 import os
 from os.path import expanduser
 
@@ -12,6 +13,8 @@ class Config(object):
         self.ABAQUS_LIBS_DIR = os.path.join(self.USER_HOME_DIR, os.path.join('abaqus_plugins', 'GoatSoft'))
         self.CONFIG_PATH = os.path.join('.', os.path.join('docs', 'config.txt'))
         self.LIBS_BUNDLE = os.path.join(self.PROJECT_DIR, 'libs_bundle')
+        self.ABAQUS_DIR = 'C:\\SIMULIA\\Abaqus'
+
         for key, value in self.read_from_file().items():
             self.__dict__[key] = value
 

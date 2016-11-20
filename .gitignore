@@ -238,3 +238,5 @@ pip-selfcheck.json
 abaqus-
 libs_bundle/
 zipped_libs.zip
+
+config.txt
