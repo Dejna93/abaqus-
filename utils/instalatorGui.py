@@ -3,13 +3,11 @@ import Tkinter as tk
 import os
 import ttk as ttk
 import tkFileDialog
-
-import subprocess
-
+import threading
 from manage_plugins import AbaqusInstalator
 from settings import config
 
-setup = AbaqusInstalator()
+manage_plugin = AbaqusInstalator()
 
 
 class Core(tk.Tk):
@@ -60,21 +58,22 @@ class MainPage(tk.Frame):
         self.parent = parent
 
 
-        ### Location frame###
+        ### Location frame ###
         # labels frame
         self.frame_dialog_dir = tk.LabelFrame(self, text="Location", height=100, padx=10, pady=10)
         self.frame_dialog_dir.grid(row=0, column=0, sticky='we')
 
         # entries
-        _v_abaqus_dir = tk.StringVar()
-        _v_plugin_dir = tk.StringVar()
+        self._v_abaqus_dir = tk.StringVar()
+        self._v_plugin_dir = tk.StringVar()
 
-        self.entry_abaqus_dir = tk.Entry(self.frame_dialog_dir, width=25, textvariable=_v_abaqus_dir)
+        self.entry_abaqus_dir = tk.Entry(self.frame_dialog_dir, width=25, textvariable=self._v_abaqus_dir)
         self.entry_abaqus_dir.grid(row=0, column=1, sticky=tk.W)
-        _v_abaqus_dir.set(config.ABAQUS_DIR)
-        self.entry_plugin_dir = tk.Entry(self.frame_dialog_dir, width=25, textvariable=_v_plugin_dir)
+        self._v_abaqus_dir.set(config.ABAQUS_DIR)
+        self.entry_plugin_dir = tk.Entry(self.frame_dialog_dir, width=25, textvariable=self._v_plugin_dir)
         self.entry_plugin_dir.grid(row=1, column=1, sticky=tk.W)
-        _v_plugin_dir.set(config.PROJECT_PLUGIN)
+        self._v_plugin_dir.set(config.PROJECT_PLUGIN)
+
         # buttons
         self.button_abaqus_dir = tk.Button(self.frame_dialog_dir, text="Choose Abaqus directory", width=25,
                                       command=lambda: self.set_location(entry=self.entry_abaqus_dir))
@@ -88,7 +87,7 @@ class MainPage(tk.Frame):
                                            command=lambda: self.update_settings())
         self.button_save_config.grid(row=2, sticky='we', padx=5, pady=5)
 
-        ### Option frame###
+        ### Option frame ###
         # labels frame
         self.frame_options = tk.LabelFrame(self, text="Options", height=100, padx=10, pady=10)
         self.frame_options.grid(row=1, column=0, sticky='we')
@@ -98,25 +97,57 @@ class MainPage(tk.Frame):
                                       command=lambda: self.set_location(entry=self.entry_abaqus_dir))
         self.button_install_libs.grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
 
-        self.button_install_plugin = tk.Button(self.frame_options, text="Collect necessary libs", width=25,
-                                          command=lambda: setup.collect_libs())
-        self.button_install_plugin.grid(row=0, column=1, sticky=tk.W, padx=5, pady=5)
+        self.button_collect_libs = tk.Button(self.frame_options, text="Collect necessary libs", width=25,
+                                          command=lambda: manage_plugin.collect_libs())
+        self.button_collect_libs.grid(row=0, column=1, sticky=tk.W, padx=5, pady=5)
+
+        self.buttonrequirements = tk.Button(self.frame_options, text="Create requirements file", width=25,
+                                          command=lambda: self.save_requirements())
+        self.buttonrequirements.grid(row=1, column=1, sticky=tk.W, padx=5, pady=5)
 
         self.button_install_plugin = tk.Button(self.frame_options, text="Install your plugin", width=25,
-                                      command=lambda: setup.copy_files(
+                                      command=lambda: manage_plugin.copy_files(
                                           config.PROJECT_PLUGIN, config.ABAQUS_LIBS_DIR, flat=False))
         self.button_install_plugin.grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
 
-        ### Option frame###
+
+        self.button_install_plugin = tk.Button(self.frame_options, text="TestButton", width=25,
+                                      command=lambda: self.test())
+        self.button_install_plugin.grid(row=3, column=0, sticky=tk.W, padx=5, pady=5)
+
+        ### Python command frame ###
         # labels frame
-        self.frame_progress_bar = tk.LabelFrame(self, text="Options", height=100, padx=10, pady=10)
-        self.frame_progress_bar.grid(row=3, column=0, sticky='we')
+        self.frame_python_command = tk.LabelFrame(self, text="PythonComand", height=100, padx=10, pady=10)
+        self.frame_python_command.grid(row=3, column=0, sticky='we')
 
-        # progressbar
-        self.progress = ttk.Progressbar(self.frame_progress_bar, orient="horizontal", length=400, mode="determinate")
-        self.progress.grid(row=3, column=0)
+        # labels
+        self.label_python_comand = tk.Label(self.frame_python_command,
+                                            text=u'There you can write python command using Python from Abaqus')
+        self.label_python_comand.grid(row=0, column=0, sticky='we')
 
+        # button
+        self.button_python_command = tk.Button(self.frame_python_command, text="Run it!",
+                                               command=lambda: self.run_command())
+        self.button_python_command.grid(row=1, column=1, sticky='w', padx=5, pady=5)
 
+        # entry
+        self._v_python_comand = tk.StringVar()
+        self.entry_python_command = tk.Entry(self.frame_python_command, textvariable=self._v_python_comand, width=25)
+        self.entry_python_command.grid(row=1, column=0, sticky='we')
+
+        ### TextArea frame ###
+        # labels frame
+        self.frame_textarea = tk.LabelFrame(self, text="TextArea", height=100, padx=10, pady=10)
+        self.frame_textarea.grid(row=4, column=0, sticky='we')
+
+        # textarea
+        self.text_console_output = tk.Text(self.frame_textarea, height=20, borderwidth=3, relief="sunken")
+        self.text_console_output.grid(row=0, column=0, sticky='we')
+
+        # scrollbar
+        self.scrollbar_textarea = tk.Scrollbar(self.frame_textarea, command=self.text_console_output.yview)
+        self.scrollbar_textarea.grid(row=0, column=1, sticky='nsew')
+        self.text_console_output['yscrollcommand'] = self.scrollbar_textarea.set
 
     # return path to choosen directory
     def get_file_path(self):
@@ -126,28 +157,40 @@ class MainPage(tk.Frame):
         entry.delete(0, tk.END)
         entry.insert(0, self.get_file_path())
 
-    def progress_bar_start(self):
-        self.progress["value"] = 0
-        self.maxbytes = 50000
-        self.progress["maximum"] = 50000
-        self.read_bytes()
+    def save_requirements(self):
+        self.text_console_output.delete('1.0', tk.END)# clear textarea
+        self.text_console_output.insert(tk.END, "Requirements:\n")
+        req, errors = manage_plugin.create_requirements_file()
+        self.text_console_output.insert(tk.END, req)
+        with open(os.path.join('.', os.path.join('docs', 'requirements.txt')), 'w') as file:
+            file.write(req)
 
-    def progress_bar_read_bytes(self):
-        '''simulate reading 500 bytes; update progress bar'''
-        self.bytes += 500
-        self.progress["value"] = self.bytes
-        if self.bytes < self.maxbytes:
-            # read more bytes after 100 ms
-            self.after(100, self.read_bytes)
+    def test(self):
+        self.text_console_output.delete('1.0', tk.END)# clear textarea
+        for output, errors, lib in manage_plugin.libs_install_test():
+            self.text_console_output.insert(tk.END, "Installing library: %s" % lib)
+            self.text_console_output.insert(tk.END, "Output from pip: %s\n" % output)
+            self.text_console_output.insert(tk.END, "Errors: %s\n" % errors)
+
+    def run_command(self):
+        self.text_console_output.delete('1.0', tk.END)# clear textarea
+        output, errors = manage_plugin.python_command(self._v_python_comand.get())
+        self.text_console_output.insert(tk.END, "Output: \n%s\n" % output)
+        self.text_console_output.insert(tk.END, "Errors: \n%s\n" % errors)
 
     def update_settings(self, *args, **kwargs):
         config_vars = {
             'ABAQUS_DIR': self.entry_abaqus_dir.get(),
             'PROJECT_PLUGIN': self.entry_plugin_dir.get()
         }
+
+        self.text_console_output.delete('1.0', tk.END)
+        self.text_console_output.insert(tk.END, "Saved paths:\n")
         with open(config.CONFIG_PATH, 'w') as config_file:
             for key, value in config_vars.items():
-                config_file.write(key + "=" + value + '\n')
+                opt = key + "=" + value + '\n'
+                config_file.write(opt)
+                self.text_console_output.insert(tk.END, opt)
 
 
 class PageOne(tk.Frame):
@@ -155,11 +198,11 @@ class PageOne(tk.Frame):
         tk.Frame.__init__(self, parent)
 
 
-
 def run_gui():
     app = Core()
     app.minsize(width=425, height=400)
     app.mainloop()
+
 
 if __name__ == '__main__':
     run_gui()

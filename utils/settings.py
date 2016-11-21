@@ -13,7 +13,9 @@ class Config(object):
         self.ABAQUS_LIBS_DIR = os.path.join(self.USER_HOME_DIR, os.path.join('abaqus_plugins', 'GoatSoft'))
         self.CONFIG_PATH = os.path.join('.', os.path.join('docs', 'config.txt'))
         self.LIBS_BUNDLE = os.path.join(self.PROJECT_DIR, 'libs_bundle')
-        self.ABAQUS_DIR = 'C:\\SIMULIA\\Abaqus'
+        # self.ABAQUS_PYTHON = 'C:\\SIMULIA\\Abaqus\\6.14-2SE\\tools\\SMApy\\python2.7\\Scripts'
+        self.ABAQUS_PYTHON = 'C:\\SIMULIA\\Abaqus\\6.14-2SE\\tools\\SMApy\\python2.7'
+        self.REQUIREMENTS_FILE = os.path.join('.', os.path.join('docs', 'requirements.txt'))
 
         for key, value in self.read_from_file().items():
             self.__dict__[key] = value

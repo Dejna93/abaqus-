@@ -3,10 +3,13 @@ import getopt
 import os
 import shutil
 import sys
+import subprocess as sub
 from settings import config
 import pip
 import importlib
 from zipfile import ZipFile, error as zfError
+import threading
+import Tkinter as tk
 
 
 class AbaqusInstalator(object):
@@ -37,6 +40,11 @@ class AbaqusInstalator(object):
             shutil.rmtree(config.LIBS_BUNDLE)
         except shutil.Error as e:
             print u"Some errors with removing libs_bundle. \n Error: %s" % e
+
+    def create_requirements_file(self):
+        p = sub.Popen(['pip', 'freeze'], stdout=sub.PIPE, stderr=sub.PIPE)
+        output, errors = p.communicate()
+        return output, errors
 
     def copy_files(self, source, destiny, flat, ignore_files=['']):
         """
@@ -107,19 +115,27 @@ class AbaqusInstalator(object):
             except shutil.Error as e:
                 print u"Some errors with removing libs_bundle. \n Error: %s" % e
 
+    def libs_install_test(self):
+        with open(config.REQUIREMENTS_FILE) as file:
+            for lib in file:
+                command = '-m pip install %s'%lib
+                output, errors = self.python_command(command)
+                yield output, errors, lib
 
+    def python_command(self, text):
+        app = 'python.exe'
+        appPath = os.path.join(config.ABAQUS_PYTHON, app)
+        command = [appPath]
+        command.extend(text.split())
+        try:
+            p = sub.Popen(command, stdout=sub.PIPE, stderr=sub.PIPE)
+            p_status = p.wait()
+        except sub.CalledProcessError as e:
+            print e
+        finally:
+            output, errors = p.communicate()
+            return output, errors
 
-def main(*args, **kwargs):
-    instalator = AbaqusInstalator()
-    # print u'Install local'
-    # instalator.install_libs(config.INSTALLED_LIBS)
-    # print u'Collect local'
-    # instalator.collect_libs()
-    # print u'Install from local'
-    # instalator.install_libs(destiny_path=config.LIBS_BUNDLE)
-    # print u'Move yor plugin into Abaqus dir'
-    # instalator.copy_files(config.PROJECT_PLUGIN, config.ABAQUS_PLUGINS_DIR,
-    #                       flat=kwargs['flat'], ignore_files=config.COPY_IGNORE_FILES)
 if __name__ == '__main__':
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hf:i:c:d", ["flat", 'install', 'copy', 'destiny'])
@@ -138,5 +154,3 @@ if __name__ == '__main__':
             sys.exit()
         elif opt in ("-f", "--flat"):
             kwargs['flat'] = True
-
-    main(**kwargs)
