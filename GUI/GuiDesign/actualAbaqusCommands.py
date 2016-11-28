@@ -9,6 +9,10 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
         pass
 
     def setindenter(self, indenter,roundingradius=0):
+        try:
+            float(roundingradius)
+        except ValueError:
+            roundingradius = 0.0
         if indenter == "spherical":
             s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__',
                                                         sheetSize=200.0)
@@ -68,4 +72,30 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
             session.viewports['Viewport: 1'].setValues(displayedObject=p)
             del mdb.models['Model-1'].sketches['__profile__']
 
+    def createSpecimen(self, width, length, height):
+        try:
+            width = float(width)
+        except ValueError:
+            width = 10.0
+        try:
+            length = float(length)
+        except ValueError:
+            length = 10.0
+        try:
+            height = float(height)
+        except ValueError:
+            height = 10.0
+        s1 = mdb.models['Model-1'].ConstrainedSketch(name='__profile__',
+                                                     sheetSize=200.0)
+        g, v, d, c = s1.geometry, s1.vertices, s1.dimensions, s1.constraints
+        s1.setPrimaryObject(option=STANDALONE)
+        s1.rectangle(point1=(-width/2, length/2), point2=(length/2, -width/2))
+        p = mdb.models['Model-1'].Part(name='Specimen', dimensionality=THREE_D,
+                                       type=DEFORMABLE_BODY)
+        p = mdb.models['Model-1'].parts['Specimen']
+        p.BaseSolidExtrude(sketch=s1, depth=height)
+        s1.unsetPrimaryObject()
+        p = mdb.models['Model-1'].parts['Specimen']
+        session.viewports['Viewport: 1'].setValues(displayedObject=p)
+        del mdb.models['Model-1'].sketches['__profile__']
 

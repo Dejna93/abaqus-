@@ -16,15 +16,20 @@ def testFunction():
     class GuiApplication:
         def __init__(self):
             self.master = Tk()
+            self.abaqus = actualAbaqusCommands.ActualAbaqusCommands()
+            # self.abaqus = abaqusCommands.AbaqusCommands()
 
+            self.specimenWidth = StringVar()
+            self.vfaz = (self.master.register(self.specimen_dimension_validate), '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
+            self.specimenLength = StringVar()
+            self.specimenHeight = StringVar()
             self.rounding_float_value = 0.0
             self.previous_rounding_value = StringVar()
             self.previous_rounding_value.set("0.0")
 
             self.v = IntVar()
 
-            self.abaqus = actualAbaqusCommands.ActualAbaqusCommands()
-            # self.abaqus = abaqusCommands.AbaqusCommands()
+
 
             self.sphericalIndenterImage = PhotoImage(file=dir_path+"/"+"PrototypSpherical.ppm")
             self.vickersIndenterImage = PhotoImage(file=dir_path+"/"+"PrototypVickers.ppm")
@@ -53,6 +58,19 @@ def testFunction():
             self.indenterImageLabel.image = self.sphericalIndenterImage
             self.indenterImageLabel.pack()
 
+            self.specimenWidthLabel = ttk.Label(self.frame, text="Specimen width:")
+            self.specimenWidthEntry = ttk.Entry(self.master, validate='key', validatecommand=self.vfaz, textvariable=self.specimenWidth)
+            self.specimenLengthLabel = ttk.Label(self.frame, text="Specimen length:")
+            self.specimenLengthEntry = ttk.Entry(self.master, validate='key', validatecommand=self.vfaz, textvariable=self.specimenLength)
+            self.specimenHeightLabel = ttk.Label(self.frame, text="Specimen height:")
+            self.specimenHeightEntry = ttk.Entry(self.master, validate='key', validatecommand=self.vfaz, textvariable=self.specimenHeight)
+            self.specimenWidthLabel.pack()
+            self.specimenWidthEntry.pack()
+            self.specimenLengthLabel.pack()
+            self.specimenLengthEntry.pack()
+            self.specimenHeightLabel.pack()
+            self.specimenHeightEntry.pack()
+
             self.button = Button(self.frame, text="done", command=self.close_window)
             self.button.pack()
 
@@ -71,14 +89,26 @@ def testFunction():
             except ValueError:
                 rounding_value.set(self.previous_rounding_value.get())
 
-
-
-
+        def specimen_dimension_validate(self, action, index, value_if_allowed,
+                       prior_value, text, validation_type, trigger_type, widget_name):
+            if text in '0123456789.-+':
+                try:
+                    float(value_if_allowed)
+                    if value_if_allowed < 0.0:
+                        return False
+                    return True
+                except ValueError:
+                    if value_if_allowed == ' ' or ' ':
+                        return True
+                    return False
+            else:
+                return False
 
 
 
         def close_window(self):
             self.abaqus.setindenter(self.indenterComboBox.get(), self.rounding_float_value)
+            self.abaqus.createSpecimen(self.specimenWidth.get(), self.specimenLength.get(), self.specimenHeight.get())
             # print(self.indenterComboBox.get())
 
             self.master.destroy()

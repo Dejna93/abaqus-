@@ -10,5 +10,10 @@ class AbaqusCommands:
         print(indenter)
         print(roundingradius)
 
+    def createSpecimen(self, width, length, height):
+        print(width)
+        print(length)
+        print(height)
+
 
 
