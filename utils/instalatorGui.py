@@ -1,13 +1,25 @@
 """Just Instalator Gui"""
 import Tkinter as tk
 import os
-import ttk as ttk
-import tkFileDialog
 import threading
+import tkFileDialog
+
+import time
+
 from manage_plugins import AbaqusInstalator
 from settings import config
 
 manage_plugin = AbaqusInstalator()
+
+
+class ThreadedTask(threading.Thread):
+    def __init__(self, queue):
+        threading.Thread.__init__(self)
+        self.queue = queue
+
+    def run(self):
+        time.sleep(5)  # Simulate long running process
+        self.queue.put("Task finished")
 
 
 class Core(tk.Tk):
@@ -57,7 +69,6 @@ class MainPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.parent = parent
 
-
         ### Location frame ###
         # labels frame
         self.frame_dialog_dir = tk.LabelFrame(self, text="Location", height=100, padx=10, pady=10)
@@ -76,15 +87,15 @@ class MainPage(tk.Frame):
 
         # buttons
         self.button_abaqus_dir = tk.Button(self.frame_dialog_dir, text="Choose Abaqus directory", width=25,
-                                      command=lambda: self.set_location(entry=self.entry_abaqus_dir))
+                                           command=lambda: self.set_location(entry=self.entry_abaqus_dir))
         self.button_abaqus_dir.grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
 
         self.button_abaqus_dir = tk.Button(self.frame_dialog_dir, text="Choose Your plugin directory", width=25,
-                                      command=lambda: self.set_location(entry=self.entry_plugin_dir))
+                                           command=lambda: self.set_location(entry=self.entry_plugin_dir))
         self.button_abaqus_dir.grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
 
         self.button_save_config = tk.Button(self.frame_dialog_dir, text="Save paths", width=25,
-                                           command=lambda: self.update_settings())
+                                            command=lambda: self.update_settings())
         self.button_save_config.grid(row=2, sticky='we', padx=5, pady=5)
 
         ### Option frame ###
@@ -94,25 +105,24 @@ class MainPage(tk.Frame):
 
         # buttons
         self.button_install_libs = tk.Button(self.frame_options, text="Install Libs in Abaqus", width=25,
-                                      command=lambda: self.set_location(entry=self.entry_abaqus_dir))
+                                             command=lambda: self.set_location(entry=self.entry_abaqus_dir))
         self.button_install_libs.grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
 
         self.button_collect_libs = tk.Button(self.frame_options, text="Collect necessary libs", width=25,
-                                          command=lambda: manage_plugin.collect_libs())
+                                             command=lambda: manage_plugin.collect_libs())
         self.button_collect_libs.grid(row=0, column=1, sticky=tk.W, padx=5, pady=5)
 
         self.buttonrequirements = tk.Button(self.frame_options, text="Create requirements file", width=25,
-                                          command=lambda: self.save_requirements())
+                                            command=lambda: self.save_requirements())
         self.buttonrequirements.grid(row=1, column=1, sticky=tk.W, padx=5, pady=5)
 
         self.button_install_plugin = tk.Button(self.frame_options, text="Install your plugin", width=25,
-                                      command=lambda: manage_plugin.copy_files(
-                                          config.PROJECT_PLUGIN, config.ABAQUS_LIBS_DIR, flat=False))
+                                               command=lambda: manage_plugin.copy_files(
+                                                   config.PROJECT_PLUGIN, config.ABAQUS_LIBS_DIR, flat=False))
         self.button_install_plugin.grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
 
-
         self.button_install_plugin = tk.Button(self.frame_options, text="TestButton", width=25,
-                                      command=lambda: self.test())
+                                               command=lambda: GuiThreader(name='Save paths', function=self.test_threading()))
         self.button_install_plugin.grid(row=3, column=0, sticky=tk.W, padx=5, pady=5)
 
         ### Python command frame ###
@@ -158,7 +168,7 @@ class MainPage(tk.Frame):
         entry.insert(0, self.get_file_path())
 
     def save_requirements(self):
-        self.text_console_output.delete('1.0', tk.END)# clear textarea
+        self.text_console_output.delete('1.0', tk.END)  # clear textarea
         self.text_console_output.insert(tk.END, "Requirements:\n")
         req, errors = manage_plugin.create_requirements_file()
         self.text_console_output.insert(tk.END, req)
@@ -166,14 +176,19 @@ class MainPage(tk.Frame):
             file.write(req)
 
     def test(self):
-        self.text_console_output.delete('1.0', tk.END)# clear textarea
+        self.text_console_output.delete('1.0', tk.END)  # clear textarea
         for output, errors, lib in manage_plugin.libs_install_test():
             self.text_console_output.insert(tk.END, "Installing library: %s" % lib)
             self.text_console_output.insert(tk.END, "Output from pip: %s\n" % output)
             self.text_console_output.insert(tk.END, "Errors: %s\n" % errors)
 
+    def test_threading(self):
+        while True:
+            print("Look a while true loop that doesn't block the GUI!")
+            time.sleep(1)
+
     def run_command(self):
-        self.text_console_output.delete('1.0', tk.END)# clear textarea
+        self.text_console_output.delete('1.0', tk.END)  # clear textarea
         output, errors = manage_plugin.python_command(self._v_python_comand.get())
         self.text_console_output.insert(tk.END, "Output: \n%s\n" % output)
         self.text_console_output.insert(tk.END, "Errors: \n%s\n" % errors)

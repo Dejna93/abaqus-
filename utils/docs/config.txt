@@ -1,2 +1,2 @@
-ABAQUS_DIR=C:/SIMULIA/Abaqus
-PROJECT_PLUGIN=C:/Users/arato/PycharmProjects/AbaqusPlugin/GoatSoft/plugin
+ABAQUS_DIR=C:/Users/arato/PycharmProjects
+PROJECT_PLUGIN=C:/Users/arato/OneDrive

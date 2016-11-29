@@ -5,7 +5,7 @@ import tkFileDialog
 FONT = ("Times New Roman", 8)
 
 
-class Capp(tk.Tk):
+class Core(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
@@ -16,22 +16,9 @@ class Capp(tk.Tk):
         container.pack(side="top", fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
-
-        menu = tk.Menu(self)
-        self.config(menu=menu)
-        file = tk.Menu(menu)
-        file.add_command(label="Open")
-        file.add_command(label="Exit")
-
-        help = tk.Menu(menu)
-        help.add_command(label="Help")
-
-        menu.add_cascade(label="File", menu=file)
-        menu.add_cascade(label="Help", menu=help)
-
         self.frames = {}
 
-        for F in (StartPage, PageOne, ConfigPage):
+        for F in (StartPage, PageOne):
             page_name = F.__name__
             frame = F(parent=container, controller=self)
             self.frames[page_name] = frame
@@ -48,93 +35,129 @@ class Capp(tk.Tk):
 
 
 class StartPage(tk.Frame):
-
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self,parent)
+        tk.Frame.__init__(self, parent)
         self.parent = parent
-        button1 = ttk.Button(self, text="OK", command=lambda: controller.show_frame("ConfigPage"))
+        button1 = ttk.Button(self, text="OK", command=lambda: controller.show_frame("PageOne"))
         button1.grid(row=1, column=1)
         button2 = ttk.Button(self, text="Quit", command=lambda: StartPage.quit(self))
         button2.grid(row=1, column=2)
 
-
-class ConfigPage(tk.Frame):
-    filename = ''
-
-    def __init__(self, parent , controller):
-        tk.Frame.__init__(self, parent)
-        self.parent = parent
-        self.grid(row=0, column=0, sticky=tk.NSEW)
-        self.file_opt = options = {}
-
-        labelFrame_1 = tk.LabelFrame(self, text=u"Specify Output directory", height="200", padx=10, pady=10)
-        labelFrame_1.pack(fill="both", padx=5, pady=5)
-
-        label_1 = tk.Label(labelFrame_1, text=u"Text file path", bg="white")
-        label_1.pack(side=tk.LEFT, padx=20)
-
-        self.entry_1 = tk.Entry(labelFrame_1, bd=2, width=50)
-        self.entry_1.pack(side=tk.LEFT, fill=tk.X, padx=20)
-
-        labelFrame_2 = tk.LabelFrame(self, text="Operations", height=100, padx=10, pady=10)
-        labelFrame_2.pack(fill="both", padx=5, pady=5)
-
-        label_2 = tk.Label(labelFrame_2, text="Check file")
-        label_2.pack(side=tk.LEFT, padx=20)
-
-        btn_2 = tk.Button(labelFrame_2, text="Valid", command=lambda: self.fileoper.validate(self.filename))
-        btn_2.pack(side=tk.LEFT, padx=10)
-
-        label_2 = tk.Label(labelFrame_2, text="Create STL")
-        label_2.pack(side=tk.LEFT, padx=10)
-        btn_3 = tk.Button(labelFrame_2, text="OK", command=lambda: self.check_filepath(controller))
-        btn_3.pack(side=tk.LEFT, padx=10)
-
-        label_3 = tk.Label(labelFrame_2, text="Import Geometry")
-        label_3.pack(side=tk.LEFT, padx=10)
-
-        btn_4 = tk.Button(labelFrame_2, text="Import")
-        btn_4.pack(side=tk.LEFT, padx=10)
-
-
-    def askopenfile(self):
-        self.filename = tkFileDialog.askopenfilename(**self.file_opt)
-
-        if self.filename:
-            print self.filename
-            self.set_entry(self.filename)
-            return open(self.filename, 'r')
-
-    def set_entry(self, text):
-        self.entry_1.delete(0, tk.END)
-        self.entry_1.insert(0, text)
-
-    def check_filepath(self,controller):
-
-        if(self.filename):
-            controller.show_frame("STLPage")
-
-    def opennew(self):
-        print "opening"
-
-
 class PageOne(tk.Frame):
-
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+        self.parent = parent
 
-        label_1 = ttk.Label(self, text="COS TAM")
-        label_2 = ttk.Label(self, text="COS TAM 2")
+        # 'private' variables
+        _i = 0
+        _j = 0
 
-        entry_1 = ttk.Entry(self)
-        entry_2 = ttk.Entry(self)
+        # frames
+        self.frame_increments = tk.LabelFrame(self, text="Increments", height=100, padx=10, pady=10)
+        self.frame_increments.grid(row=0, column=0, sticky='we')
+        self.frame_select_increments = tk.LabelFrame(self, text="Select increments", height=100, padx=10, pady=10)
+        self.frame_select_increments.grid(row=1, column=0, sticky='we')
 
-        label_1.grid(row=0, padx=20, pady=20)
-        label_2.grid(row=1)
-        entry_1.grid(row=0, column=1)
-        entry_2.grid(row=1, column=1)
+        self.frame_elements = tk.LabelFrame(self, text="Elements", height=100, padx=10, pady=10)
+        self.frame_elements.grid(row=0, column=1, sticky='we')
+        self.frame_select_elements = tk.LabelFrame(self, text="Select elements", height=100, padx=10, pady=10)
+        self.frame_select_elements.grid(row=1, column=1, sticky='we')
 
-    def run_gui(self):
-        app = Capp()
-        app.minsize(width=400,height=400)
-        app.mainloop()
+        self.frame_output_request = tk.LabelFrame(self, text="Output request", height=100, padx=10, pady=10)
+        self.frame_output_request.grid(row=2, column=0, sticky='we')
+        self.frame_steps = tk.LabelFrame(self, text="Steps", height=100, padx=10, pady=10)
+        self.frame_steps.grid(row=2, column=1, sticky='we')
+
+        self.frame_materials = tk.LabelFrame(self, text="Materials", height=100, padx=10, pady=10)
+        self.frame_materials.grid(row=2, column=0, sticky='we')
+        self.frame_select_grains = tk.LabelFrame(self, text="Selcet grains", height=100, padx=10, pady=10)
+        self.frame_select_grains.grid(row=2, column=1, sticky='we')
+
+        ### Increments ###
+        # radio buttons
+        self.radio_increments = {}
+        _radio_buttons = ((u"All increments", 0), (u"Selected", 0), (u"Range", 0))
+        _i = 0
+        for radio in _radio_buttons:
+            self.radio_increments[radio[0]] = tk.Radiobutton(self.frame_increments, text=radio[0], value=radio[1])
+            self.radio_increments[radio[0]].grid(row=0, column=_i, columnspan=2, sticky='we')
+            _i += 2
+
+        # entries
+        self.entires_increments = {}
+        _entires = ((u"Set max", (1, 2)), (u"Min", (1, 4)), (u"Max", (2, 4)))
+        _i = 3
+        for entry in _entires:
+                self.entires_increments[entry[0]] = self.make_entry(
+                    self.frame_increments, text=entry[0], row=entry[1][0], col=entry[1][1], width=6)
+
+        ### Elements ###
+        # radio buttons
+        self.radio_elements = {}
+        _radio_buttons = ((u"All increments", 0), (u"Selected", 0), (u"Range", 0))
+        _i = 0
+        for radio in _radio_buttons:
+            print(radio[0])
+            self.radio_elements[radio[0]] = tk.Radiobutton(self.frame_elements, text=radio[0])
+            self.radio_elements[radio[0]].grid(row=0, column=_i, columnspan=2, sticky='we')
+            _i += 2
+
+        # entries
+        self.entires_elements = {}
+        _entires = ((u"Set max", (1, 2)), (u"Min", (1, 4)), (u"Max", (2, 4)))
+        _i = 3
+        for entry in _entires:
+            self.entires_elements[entry[0]] = self.make_entry(
+                self.frame_elements, text=entry[0], row=entry[1][0], col=entry[1][1], width=6)
+
+        print self.radio_elements["All increments"].get()
+
+    def make_entry(self, frame, text, row, col, width=25, **e_options):
+        """
+        :param col: grid column
+        :param row: grid row
+        :param frame: parent frame/label_frame
+        :param text: print by label
+        :param e_options: dict of entry options
+        :return: tuple (label and entry)
+        """
+        label = tk.Label(frame, text=text, width=10)
+        label.grid(row=row, column=col, sticky='e')
+        entry = tk.Entry(frame, width=width, **e_options)
+        entry.insert(0, row)
+        entry.bind("<KeyPress>", lambda event: self.entry_integer_validator(event, max_len=width))
+        entry.grid(row=row, column=col + 1, sticky='e')
+        return (label, entry)
+
+    # custom validator
+    def entry_integer_validator(self, event, max_len):
+        if event.char in '0123456789':
+            pass
+        elif event.widget.get().count('.') == 0 and event.char == '.':
+            pass
+        elif event.keysym == "BackSpace" or event.keysym == 'Delete':
+            pass
+        else:
+            return 'break'
+
+        if len(event.widget.get()) < max_len:
+            pass
+        elif len(event.widget.get()) == max_len and event.keysym == "BackSpace" or event.keysym == 'Delete':
+            pass
+        else:
+            return 'break'
+
+    def get_increments(self):
+        pass
+
+    def get_elements(self):
+        pass
+
+
+def run_gui():
+    app = Core()
+    app.minsize(width=400, height=400)
+    app.mainloop()
+
+if __name__ == '__main__':
+    run_gui()
