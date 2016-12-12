@@ -6,7 +6,7 @@ class AbaqusCommands:
     def __init__(self):
         pass
 
-    def setindenter(self, indenter, roundingradius=0):
+    def setindenter(self, indenter, roundingradius=0, sphericalradius=5):
         print(indenter)
         print(roundingradius)
 

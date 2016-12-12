@@ -8,7 +8,7 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
     def __init__(self):
         self.specimenWidth = 10.0; self.specimenLength = 10.0; self.specimenHeight = 10.0
 
-    def setindenter(self, indenter,roundingradius=0):
+    def setindenter(self, indenter,roundingradius=0, sphericalradius=5):
         try:
             float(roundingradius)
         except ValueError:
@@ -21,7 +21,7 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
             s.ConstructionLine(point1=(0.0, -100.0), point2=(0.0, 100.0))
             s.FixedConstraint(entity=g[2])
             s.ArcByCenterEnds(center=(0.0, 0.0), point1=(-5.0, 0.0), point2=(0.0, 5.0),
-                              direction=CLOCKWISE)
+                              direction=CLOCKWISE) # przeciwlegle punkty na okregu to -5,0,0 i 5,0,0
             s.CoincidentConstraint(entity1=v[2], entity2=g[2], addUndoState=False)
             s.CoincidentConstraint(entity1=v[1], entity2=g[2], addUndoState=False)
             p = mdb.models['Model-1'].Part(name='Indenter', dimensionality=THREE_D,
