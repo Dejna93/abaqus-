@@ -5,8 +5,8 @@ import ttk
 #from django import forms
 
 #execfile("abaqusCommands.py")
-import abaqusCommands
-# import actualAbaqusCommands
+# import abaqusCommands
+import actualAbaqusCommands
 
 import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -16,8 +16,8 @@ def testFunction():
     class GuiApplication:
         def __init__(self):
             self.master = Tk()
-            # self.abaqus = actualAbaqusCommands.ActualAbaqusCommands()
-            self.abaqus = abaqusCommands.AbaqusCommands()
+            self.abaqus = actualAbaqusCommands.ActualAbaqusCommands()
+            # self.abaqus = abaqusCommands.AbaqusCommands()
 
             self.specimenWidth = StringVar()
             self.vfaz = (self.master.register(self.specimen_dimension_validate), '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
@@ -111,6 +111,7 @@ def testFunction():
         def close_window(self):
             self.abaqus.setindenter(self.indenterComboBox.get(), self.rounding_float_value)
             self.abaqus.createSpecimen(self.specimenWidth.get(), self.specimenLength.get(), self.specimenHeight.get())
+            self.abaqus.createBasis()
             # print(self.indenterComboBox.get())
 
             self.master.destroy()

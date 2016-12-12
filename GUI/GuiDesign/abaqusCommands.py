@@ -15,5 +15,8 @@ class AbaqusCommands:
         print(length)
         print(height)
 
+    def createBasis(self):
+        pass
+
 
 

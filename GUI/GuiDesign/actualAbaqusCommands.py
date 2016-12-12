@@ -6,7 +6,7 @@ import abaqusCommands
 
 class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
     def __init__(self):
-        pass
+        self.specimenWidth = 10.0; self.specimenLength = 10.0; self.specimenHeight = 10.0
 
     def setindenter(self, indenter,roundingradius=0):
         try:
@@ -85,6 +85,7 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
             height = float(height)
         except ValueError:
             height = 10.0
+            self.specimenWidth = width; self.specimenHeight = height; self.specimenLength = length
         s1 = mdb.models['Model-1'].ConstrainedSketch(name='__profile__',
                                                      sheetSize=200.0)
         g, v, d, c = s1.geometry, s1.vertices, s1.dimensions, s1.constraints
@@ -99,7 +100,11 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
         session.viewports['Viewport: 1'].setValues(displayedObject=p)
         del mdb.models['Model-1'].sketches['__profile__']
 
-    def createBasis(self, a):
+    def createBasis(self):
+        if self.specimenHeight > self.specimenWidth:
+            a = self.specimenHeight*2
+        else:
+            a = self.specimenWidth*2
         s1 = mdb.models['Model-1'].ConstrainedSketch(name='__profile__',
                                                      sheetSize=200.0)
         g, v, d, c = s1.geometry, s1.vertices, s1.dimensions, s1.constraints
