@@ -56,7 +56,7 @@ def testFunction():
             self.roundingValue.trace("w", lambda name, index, mode, roundingValue=self.roundingValue: self.on_rounding_input(roundingValue))
 
             self.roundingEntry = ttk.Entry(self.master, textvariable=self.roundingValue)
-            self.indenterRoundingLabel = ttk.Label(self.frame, text="rounding radius:")
+            self.indenterRoundingLabel = ttk.Label(self.master, text="rounding radius:")
             self.indenterImageLabel.image = self.sphericalIndenterImage
             self.indenterImageLabel.pack()
 
