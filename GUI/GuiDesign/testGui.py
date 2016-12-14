@@ -118,7 +118,8 @@ def testFunction():
             self.abaqus.createSpecimen(self.specimenWidth.get(), self.specimenLength.get(), self.specimenHeight.get())
             self.abaqus.createBasis()
             self.abaqus.setindenter(self.indenterComboBox.get(), self.rounding_float_value, self.sphericalRadius.get())
-
+            self.abaqus.prepareAssembly()
+            self.abaqus.rotateSpecimen()
 
             # print(self.indenterComboBox.get())
 

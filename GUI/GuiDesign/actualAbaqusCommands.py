@@ -7,7 +7,8 @@ import abaqusCommands
 class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
     def __init__(self):
         self.specimenWidth = 10.0; self.specimenLength = 10.0; self.specimenHeight = 10.0
-        self.a = 5.0; self.sin60 = 0.866025404;
+        self.a = 5.0; self.sin60 = 0.866025404; self.sphericalRadius = 5.0;
+        self.distanceBetweenSpecimenAndIndenter = 0.1;
 
     def setindenter(self, indenter, roundingradius=0, sphericalradius=5):
         try:
@@ -15,9 +16,9 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
         except ValueError:
             roundingradius = 0.0
         try:
-            sphericalradius = float(sphericalradius)
+            self.sphericalRadius = float(sphericalradius)
         except ValueError:
-            sphericalradius = 5.0
+            pass
         if indenter == "spherical":
             s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__',
                                                         sheetSize=200.0)
@@ -25,7 +26,7 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
             s.setPrimaryObject(option=STANDALONE)
             s.ConstructionLine(point1=(0.0, -100.0), point2=(0.0, 100.0))
             s.FixedConstraint(entity=g[2])
-            s.ArcByCenterEnds(center=(0.0, 0.0), point1=(-1*sphericalradius, 0.0), point2=(0.0, sphericalradius),
+            s.ArcByCenterEnds(center=(0.0, 0.0), point1=(-1*self.sphericalRadius, 0.0), point2=(0.0, self.sphericalRadius),
                               direction=CLOCKWISE) # przeciwlegle punkty na okregu to -5,0,0 i 5,0,0
             s.CoincidentConstraint(entity1=v[2], entity2=g[2], addUndoState=False)
             s.CoincidentConstraint(entity1=v[1], entity2=g[2], addUndoState=False)
@@ -90,7 +91,7 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
             height = float(height)
         except ValueError:
             height = 10.0
-            self.specimenWidth = width; self.specimenHeight = height; self.specimenLength = length
+        self.specimenWidth = width; self.specimenHeight = height; self.specimenLength = length
         s1 = mdb.models['Model-1'].ConstrainedSketch(name='__profile__',
                                                      sheetSize=200.0)
         g, v, d, c = s1.geometry, s1.vertices, s1.dimensions, s1.constraints
@@ -124,3 +125,35 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
         p = mdb.models['Model-1'].parts['Basis']
         session.viewports['Viewport: 1'].setValues(displayedObject=p)
         del mdb.models['Model-1'].sketches['__profile__']
+
+    def rotateSpecimen(self):
+        pass
+
+    def prepareAssembly(self):
+        a1 = mdb.models['Model-1'].rootAssembly
+        p = mdb.models['Model-1'].parts['Basis']
+        a1.Instance(name='Basis-1', part=p, dependent=ON)
+        a1 = mdb.models['Model-1'].rootAssembly
+        p = mdb.models['Model-1'].parts['Indenter']
+        a1.Instance(name='Indenter-1', part=p, dependent=ON)
+        a1 = mdb.models['Model-1'].rootAssembly
+        p = mdb.models['Model-1'].parts['Specimen']
+        a1.Instance(name='Specimen-1', part=p, dependent=ON)
+
+    def rotateSpecimen(self):
+        a = mdb.models['Model-1'].rootAssembly
+        a.rotate(instanceList=('Specimen-1',), axisPoint=(10.0, 0.0, 0.0),
+                 axisDirection=(-20.0, 0.0, 0.0), angle=90.0)
+        self.positionSpherical()
+
+    def positionSpherical(self):
+        a = mdb.models['Model-1'].rootAssembly
+        a.rotate(instanceList=('Indenter-1',), axisPoint=(10.0, 0.0, 0.0),
+                 axisDirection=(-20.0, 0.0, 0.0), angle=180.0)
+        a = mdb.models['Model-1'].rootAssembly
+        try:
+            tmp = float(self.sphericalRadius + self.specimenHeight + self.distanceBetweenSpecimenAndIndenter)
+        except ValueError:
+            print('one of the following cannot be converted to float: sphericalRadius, specimenHeight,'
+                  ' or distanceBetweenSpicmenAndIndenter')
+        a.translate(instanceList=('Indenter-1',), vector=(0.0, tmp, 0.0))

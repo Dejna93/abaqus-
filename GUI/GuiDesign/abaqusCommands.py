@@ -19,5 +19,12 @@ class AbaqusCommands:
     def createBasis(self):
         pass
 
+    def prepareAssembly(self):
+        pass
 
+    def rotateSpecimen(self):
+        pass
+
+    def positionSpherical(self):
+        pass
 
