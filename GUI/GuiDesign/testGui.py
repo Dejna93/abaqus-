@@ -5,8 +5,8 @@ import ttk
 #from django import forms
 
 #execfile("abaqusCommands.py")
-import abaqusCommands
-# import actualAbaqusCommands
+# import abaqusCommands
+import actualAbaqusCommands
 
 import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -16,14 +16,17 @@ def testFunction():
     class GuiApplication:
         def __init__(self):
             self.master = Tk()
-            # self.abaqus = actualAbaqusCommands.ActualAbaqusCommands()
-            self.abaqus = abaqusCommands.AbaqusCommands()
+            self.abaqus = actualAbaqusCommands.ActualAbaqusCommands()
+            # self.abaqus = abaqusCommands.AbaqusCommands()
 
             self.specimenWidth = StringVar()
             self.vfaz = (self.master.register(self.specimen_dimension_validate),
                          '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
+            self.vR = (self.master.register(self.specimen_dimension_validate),
+                         '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
             self.specimenLength = StringVar()
             self.specimenHeight = StringVar()
+            self.sphericalRadius = StringVar()
             self.rounding_float_value = 0.0
             self.previous_rounding_value = StringVar()
             self.previous_rounding_value.set("0.0")
@@ -67,13 +70,16 @@ def testFunction():
             self.specimenLengthEntry = ttk.Entry(self.master, validate='key', validatecommand=self.vfaz, textvariable=self.specimenLength)
             self.specimenHeightLabel = ttk.Label(self.master, text="Specimen height:")
             self.specimenHeightEntry = ttk.Entry(self.master, validate='key', validatecommand=self.vfaz, textvariable=self.specimenHeight)
-            # self.sphericalRadiusLabel = ttk.Entry(self.master, validate='key', validatecommand=self.)
+            self.sphericalRadiusLabel = ttk.Label(self.master, text="Spherical indenter radius:")
+            self.sphericalRadiusEntry = ttk.Entry(self.master, validate='key', validatecommand=self.vR, textvariable=self.sphericalRadius)
             self.specimenWidthLabel.pack()
             self.specimenWidthEntry.pack()
             self.specimenLengthLabel.pack()
             self.specimenLengthEntry.pack()
             self.specimenHeightLabel.pack()
             self.specimenHeightEntry.pack()
+            self.sphericalRadiusLabel.pack()
+            self.sphericalRadiusEntry.pack()
 
             self.button = Button(self.master, text="done", command=self.close_window)
             self.button.pack()
@@ -108,12 +114,12 @@ def testFunction():
             else:
                 return False
 
-
-
         def close_window(self):
-            self.abaqus.setindenter(self.indenterComboBox.get(), self.rounding_float_value)
             self.abaqus.createSpecimen(self.specimenWidth.get(), self.specimenLength.get(), self.specimenHeight.get())
             self.abaqus.createBasis()
+            self.abaqus.setindenter(self.indenterComboBox.get(), self.rounding_float_value, self.sphericalRadius.get())
+
+
             # print(self.indenterComboBox.get())
 
             self.master.destroy()
@@ -127,8 +133,12 @@ def testFunction():
                 self.indenterRoundingLabel.pack_forget()
                 self.roundingEntry.pack_forget()
                 self.indenterImageLabel.configure(image=self.sphericalIndenterImage)
+                self.sphericalRadiusLabel.pack()
+                self.sphericalRadiusEntry.pack()
                 self.button.pack()
             elif self.indenterComboBox.get() == "Vickers":
+                self.sphericalRadiusLabel.pack_forget()
+                self.sphericalRadiusEntry.pack_forget()
                 self.button.pack_forget()
                 self.button.grid_forget()
                 self.indenterRoundingLabel.pack()
@@ -136,6 +146,8 @@ def testFunction():
                 self.indenterImageLabel.configure(image=self.vickersIndenterImage)
                 self.button.pack()
             elif self.indenterComboBox.get() == "Berkovich":
+                self.sphericalRadiusLabel.pack_forget()
+                self.sphericalRadiusEntry.pack_forget()
                 self.button.pack_forget()
                 self.button.grid_forget()
                 self.indenterRoundingLabel.pack()

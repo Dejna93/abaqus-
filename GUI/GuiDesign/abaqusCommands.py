@@ -9,6 +9,7 @@ class AbaqusCommands:
     def setindenter(self, indenter, roundingradius=0, sphericalradius=5):
         print(indenter)
         print(roundingradius)
+        print(sphericalradius)
 
     def createSpecimen(self, width, length, height):
         print(width)

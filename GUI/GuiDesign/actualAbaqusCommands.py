@@ -7,12 +7,17 @@ import abaqusCommands
 class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
     def __init__(self):
         self.specimenWidth = 10.0; self.specimenLength = 10.0; self.specimenHeight = 10.0
+        self.a = 5.0; self.sin60 = 0.866025404;
 
-    def setindenter(self, indenter,roundingradius=0, sphericalradius=5):
+    def setindenter(self, indenter, roundingradius=0, sphericalradius=5):
         try:
-            float(roundingradius)
+            roundingradius = float(roundingradius)
         except ValueError:
             roundingradius = 0.0
+        try:
+            sphericalradius = float(sphericalradius)
+        except ValueError:
+            sphericalradius = 5.0
         if indenter == "spherical":
             s = mdb.models['Model-1'].ConstrainedSketch(name='__profile__',
                                                         sheetSize=200.0)
@@ -20,7 +25,7 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
             s.setPrimaryObject(option=STANDALONE)
             s.ConstructionLine(point1=(0.0, -100.0), point2=(0.0, 100.0))
             s.FixedConstraint(entity=g[2])
-            s.ArcByCenterEnds(center=(0.0, 0.0), point1=(-5.0, 0.0), point2=(0.0, 5.0),
+            s.ArcByCenterEnds(center=(0.0, 0.0), point1=(-1*sphericalradius, 0.0), point2=(0.0, sphericalradius),
                               direction=CLOCKWISE) # przeciwlegle punkty na okregu to -5,0,0 i 5,0,0
             s.CoincidentConstraint(entity1=v[2], entity2=g[2], addUndoState=False)
             s.CoincidentConstraint(entity1=v[1], entity2=g[2], addUndoState=False)
@@ -38,7 +43,7 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
                                                         sheetSize=200.0)
             g, v, d, c = s.geometry, s.vertices, s.dimensions, s.constraints
             s.setPrimaryObject(option=STANDALONE)
-            s.rectangle(point1=(-5.0, 5.0), point2=(5.0, -5.0))
+            s.rectangle(point1=(-self.a/4, self.a/4), point2=(self.a/4, -self.a/4))
             p = mdb.models['Model-1'].Part(name='Indenter', dimensionality=THREE_D,
                                            type=DISCRETE_RIGID_SURFACE)
             p = mdb.models['Model-1'].parts['Indenter']
@@ -52,14 +57,14 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
             session.viewports['Viewport: 1'].setValues(displayedObject=p)
             del mdb.models['Model-1'].sketches['__profile__']
         elif indenter == "Berkovich":
-            s1 = mdb.models['Indenter'].ConstrainedSketch(name='__profile__',
+            s1 = mdb.models['Model-1'].ConstrainedSketch(name='__profile__',
                                                          sheetSize=200.0)
             g, v, d, c = s1.geometry, s1.vertices, s1.dimensions, s1.constraints
             s1.setPrimaryObject(option=STANDALONE)
-            s1.Line(point1=(-5.0, 0.0), point2=(5.0, 0.0))
+            s1.Line(point1=(-self.a/4, 0.0), point2=(self.a/4, 0.0))
             s1.HorizontalConstraint(entity=g[2], addUndoState=False)
-            s1.Line(point1=(5.0, 0.0), point2=(0.0, 8.660254))
-            s1.Line(point1=(0.0, 8.660254), point2=(-5.0, 0.0))
+            s1.Line(point1=(self.a/4, 0.0), point2=(0.0, (self.a/4)*2*self.sin60))
+            s1.Line(point1=(0.0, (self.a/4)*2*self.sin60), point2=(-self.a/4, 0.0))
             p = mdb.models['Model-1'].Part(name='Indenter', dimensionality=THREE_D,
                                            type=DISCRETE_RIGID_SURFACE)
             p = mdb.models['Model-1'].parts['Indenter']
@@ -102,19 +107,19 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
 
     def createBasis(self):
         if self.specimenHeight > self.specimenWidth:
-            a = self.specimenHeight*2
+            self.a = self.specimenHeight*2
         else:
-            a = self.specimenWidth*2
+            self.a = self.specimenWidth*2
         s1 = mdb.models['Model-1'].ConstrainedSketch(name='__profile__',
                                                      sheetSize=200.0)
         g, v, d, c = s1.geometry, s1.vertices, s1.dimensions, s1.constraints
         s1.setPrimaryObject(option=STANDALONE)
-        s1.Line(point1=(-0.5*a, 0.0), point2=(0.5*a, 0.0))
+        s1.Line(point1=(-0.5*self.a, 0.0), point2=(0.5*self.a, 0.0))
         s1.HorizontalConstraint(entity=g[2], addUndoState=False)
         p = mdb.models['Model-1'].Part(name='Basis', dimensionality=THREE_D,
                                        type=ANALYTIC_RIGID_SURFACE)
         p = mdb.models['Model-1'].parts['Basis']
-        p.AnalyticRigidSurfExtrude(sketch=s1, depth=a)
+        p.AnalyticRigidSurfExtrude(sketch=s1, depth=self.a)
         s1.unsetPrimaryObject()
         p = mdb.models['Model-1'].parts['Basis']
         session.viewports['Viewport: 1'].setValues(displayedObject=p)
