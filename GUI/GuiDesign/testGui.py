@@ -5,8 +5,8 @@ import ttk
 #from django import forms
 
 #execfile("abaqusCommands.py")
-# import abaqusCommands
-import actualAbaqusCommands
+import abaqusCommands
+# import actualAbaqusCommands
 
 import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -16,11 +16,12 @@ def testFunction():
     class GuiApplication:
         def __init__(self):
             self.master = Tk()
-            self.abaqus = actualAbaqusCommands.ActualAbaqusCommands()
-            # self.abaqus = abaqusCommands.AbaqusCommands()
+            # self.abaqus = actualAbaqusCommands.ActualAbaqusCommands()
+            self.abaqus = abaqusCommands.AbaqusCommands()
 
             self.specimenWidth = StringVar()
-            self.vfaz = (self.master.register(self.specimen_dimension_validate), '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
+            self.vfaz = (self.master.register(self.specimen_dimension_validate),
+                         '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
             self.specimenLength = StringVar()
             self.specimenHeight = StringVar()
             self.rounding_float_value = 0.0
@@ -66,6 +67,7 @@ def testFunction():
             self.specimenLengthEntry = ttk.Entry(self.master, validate='key', validatecommand=self.vfaz, textvariable=self.specimenLength)
             self.specimenHeightLabel = ttk.Label(self.master, text="Specimen height:")
             self.specimenHeightEntry = ttk.Entry(self.master, validate='key', validatecommand=self.vfaz, textvariable=self.specimenHeight)
+            # self.sphericalRadiusLabel = ttk.Entry(self.master, validate='key', validatecommand=self.)
             self.specimenWidthLabel.pack()
             self.specimenWidthEntry.pack()
             self.specimenLengthLabel.pack()
@@ -96,11 +98,11 @@ def testFunction():
             if text in '0123456789.-+':
                 try:
                     float(value_if_allowed)
-                    if value_if_allowed < 0.0:
+                    if value_if_allowed <= 0.0:
                         return False
                     return True
                 except ValueError:
-                    if value_if_allowed == ' ' or ' ':
+                    if value_if_allowed == ' ' or value_if_allowed == '':
                         return True
                     return False
             else:
@@ -123,6 +125,7 @@ def testFunction():
                 self.button.pack_forget()
                 self.button.grid_forget()
                 self.indenterRoundingLabel.pack_forget()
+                self.roundingEntry.pack_forget()
                 self.indenterImageLabel.configure(image=self.sphericalIndenterImage)
                 self.button.pack()
             elif self.indenterComboBox.get() == "Vickers":
