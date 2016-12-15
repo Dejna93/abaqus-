@@ -160,8 +160,6 @@ class MainPage(tk.Frame):
         self.text_console_output['yscrollcommand'] = self.scrollbar_textarea.set
 
     # return path to choosen directory
-    def get_file_path(self):
-        return tkFileDialog.askdirectory(parent=self.parent, initialdi='.')
 
     def set_location(self, entry):
         entry.delete(0, tk.END)

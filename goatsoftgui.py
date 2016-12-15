@@ -36,7 +36,6 @@ class Core(tk.Tk):
 
 def run_gui():
     app = Core()
-    app.maxsize(width=config.window_width, height=config.window_height)
     app.minsize(width=config.window_width, height=config.window_height)
     app.mainloop()
 

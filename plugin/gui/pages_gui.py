@@ -1,9 +1,9 @@
 import Tkinter as tk
-import ttk as ttk
+import os
 import tkFileDialog
 
+from plugin.odb_scripts.getinkrements import test
 from plugin.settings import config
-
 
 class Page(tk.Frame):
     def __init__(self, parent, controller):
@@ -35,7 +35,7 @@ class Page(tk.Frame):
     def create_entry_integer(self, frame, text, row, col, width=25, **e_options):
         entry, label = self.create_entry(frame, text, row, col, width=width, **e_options)
         entry.bind("<KeyPress>", lambda event: self.entry_integer_validator(event, max_len=width))
-        entry.insert(0, row)
+        entry.insert(0, int(row))
         return entry, label
 
     # custom validator
@@ -62,12 +62,12 @@ class StartPage(Page):
     def __init__(self, parent, controller):
         Page.__init__(self, parent, controller)
 
+        ### vars ###
+        self.is_acticve3D = False
+
         ### frames ###
         self.frame_first_part = tk.LabelFrame(self, text="Increments and elements", height=100, padx=10, pady=10)
         self.frame_first_part.grid(row=0, column=0, columnspan=2, sticky="we")
-
-        self.frame_increments_sel = tk.LabelFrame(self, text="Increments", height=100, padx=10, pady=10)
-        self.frame_elements_sel = tk.LabelFrame(self, text="Selections", height=100, padx=10, pady=10)
 
         self.frame_first_part_set_inc = tk.LabelFrame(self.frame_first_part, height=25)
         self.frame_first_part.grid(row=0, column=0, sticky='we')
@@ -80,6 +80,15 @@ class StartPage(Page):
 
         self.frame_first_part_range_el = tk.LabelFrame(self.frame_first_part, height=25)
         self.frame_first_part.grid(row=0, column=1,  sticky='we')
+
+        self.frame_output_request = tk.LabelFrame(self, text="Outputs", height=25)
+        self.frame_output_request.grid(row=1, column=1, columnspan=2, sticky='we')
+
+        self.frame_materials = tk.LabelFrame(self, text="Materials")
+        self.frame_materials.grid(row=2, column=1, sticky='we')
+
+        self.frame_options = tk.LabelFrame(self, text="Options", height=25)
+        self.frame_options.grid(row=4, column=1, sticky='we')
         ##############
 
         _names = (u"All", u"Set", u"Range")
@@ -90,6 +99,7 @@ class StartPage(Page):
         self.label_elements = tk.Label(self.frame_first_part, text=u"Elements")
         self.label_elements.grid(row=0, column=1, sticky='we')
 
+        ### listboxes ###
         self.listbox_increments = tk.Listbox(self.frame_first_part, height=3)
         self.listbox_increments.grid(row=1, column=0, sticky='we')
         self.create_listbox_values(self.listbox_increments, _names, exportselection=0)
@@ -98,6 +108,21 @@ class StartPage(Page):
         self.listbox_elements.grid(row=1, column=1, sticky='we')
         self.create_listbox_values(self.listbox_elements, _names, exportselection=0)
 
+        self.listbox_increments_selceted = tk.Listbox(self.frame_first_part, exportselection=0, selectmode=tk.EXTENDED)
+        self.listbox_elements_selceted = tk.Listbox(self.frame_first_part, exportselection=0, selectmode=tk.EXTENDED)
+
+        self.listbox_output_2D = tk.Listbox(self.frame_output_request, exportselection=0, selectmode=tk.EXTENDED)
+        _names = ("S", "PEEQ", "EVOL", "SDV121", "U", "T", "UR3", "RF", "RM3")
+        self.create_listbox_values(self.listbox_output_2D, _names, width=15, height=10)
+        self.listbox_output_2D.grid(row=0, column=1)
+
+        self.listbox_output_3D = tk.Listbox(self.frame_output_request, exportselection=0, selectmode=tk.EXTENDED)
+        _names = ("S", "T", "D")
+        self.create_listbox_values(self.listbox_output_3D, _names, width=15, height=10)
+
+        self.listbox_grains = tk.Listbox(self.frame_materials, exportselection=0, selectmode=tk.EXTENDED)
+
+        ##################
         ### listboxex commands ###
         self.listbox_increments.bind('<<ListboxSelect>>', lambda event: self.show_first_part_inc())
         self.listbox_elements.bind('<<ListboxSelect>>', lambda event: self.show_first_part_el())
@@ -107,7 +132,6 @@ class StartPage(Page):
         self.entry_inc_max, self.label_inc_max = self.create_entry_integer(
             self.frame_first_part_set_inc, u"Max", 0, 0, 3)
         self.entry_inc_max.insert(0, 1)
-
 
         self.entry_inc_start, self.label_inc_start = self.create_entry_integer(
             self.frame_first_part_range_inc, u"Start", 0, 0, 3)
@@ -124,78 +148,157 @@ class StartPage(Page):
         self.entry_el_end, self.label_el_end = self.create_entry_integer(
             self.frame_first_part_range_el, u"End", 1, 0, 3)
 
-        self.entry_inc_max.bind('<Return>', lambda event: self.show_selections("increments"))
-        self.entry_el_max.bind('<Return>', lambda event: self.show_selections("elements"))
+        self.entry_inc_max.bind('<Return>', lambda event: self.show_selection_lb("increments"))
+        self.entry_el_max.bind('<Return>', lambda event: self.show_selection_lb("elements"))
+
+        self.entry_step, self.label_step = self.create_entry_integer(
+            self.frame_output_request, "Step", 0, 2, 10)
+
+        self.entry_name_grain, self.label_add_grain = self.create_entry(self.frame_materials, "Part name", 0, 0, 25)
+
+        self.entry_odb_path = tk.Entry(self.frame_options)
+        self.grid(row=1, column=0)
+
+        # last part of gui
+        self.entry_add_grain = tk.Entry(self.frame_materials)
         ###############
+
+        ### buttons ###
+        self.button_add_grain = tk.Button(
+            self.frame_materials, text="Add grain", command=lambda: self.add_grain())
+
+        self.button_remove_grain = tk.Button(
+            self.frame_materials, text="Remove grain", command=lambda: self.remove_grain())
+
+        self.button_test = tk.Button(self.frame_options, text="Test czy cokolwiek dziala", command=lambda: test())
+        self.button_test.grid(row=5, column=0, columnspan=2, sticky="we")
+
+        self.button_save_location = tk.Button(self.frame_options, text="SaveLocation", command=lambda: self.get_file_path())
+        self.button_save_location.grid(row=4, column=0, columnspan=2, sticky="we")
+        ##############
 
         ### selections ###
         self.list_increments_sel = []
         self.list_elements_sel = []
         ##################
 
+        ### optmemnu ###
+        _names = ["2D", "3D"]
+        self.variable_opt_menu = tk.StringVar(self.frame_output_request)
+        self.variable_opt_menu.set(_names[0])  # default value
+
+        self.menu_output = tk.OptionMenu(
+            self.frame_output_request, self.variable_opt_menu, *_names, command=lambda opt: self.show_output_request())
+        self.menu_output.grid(row=0, column=0, sticky="wnse")
+
+        _names = ["All grain in one file",
+                  "All grain in order M1, M2, Mx",
+                  "Selected grain"]
+        self.variable_material_menu = tk.StringVar(self.frame_materials)
+        self.variable_material_menu.set(_names[0])  # default value
+
+        self.menu_materials = tk.OptionMenu(
+            self.frame_materials, self.variable_material_menu, *_names, command=lambda mat: self.show_grains())
+        self.menu_materials.grid(row=1, column=0, columnspan=2, sticky="wnse")
+        #################
+
     def show_first_part_inc(self):
         increments = self.listbox_increments.get(self.listbox_increments.curselection())
         if increments == u"Set":
             self.frame_first_part_range_inc.grid_remove()
             self.frame_first_part_set_inc.grid(row=2, column=0, sticky='we')
-            self.show_selections("increments")
+            self.show_selection_lb("increments")
         elif increments == u"Range":
             self.frame_first_part_set_inc.grid_remove()
             self.frame_first_part_range_inc.grid(row=2, column=0, sticky='we')
-            self.frame_increments_sel.grid_remove()
-
+            self.listbox_increments_selceted.grid_remove()
         else:
             self.frame_first_part_set_inc.grid_remove()
             self.frame_first_part_range_inc.grid_remove()
-            self.frame_increments_sel.grid_remove()
+            self.listbox_increments_selceted.grid_remove()
 
     def show_first_part_el(self):
         elements = self.listbox_elements.get(self.listbox_elements.curselection())
         if elements == u"Set":
             self.frame_first_part_range_el.grid_remove()
             self.frame_first_part_set_el.grid(row=2, column=1, sticky='we')
-            self.show_selections("elements")
+            self.show_selection_lb("elements")
         elif elements == u"Range":
             self.frame_first_part_set_el.grid_remove()
             self.frame_first_part_range_el.grid(row=2, column=1, sticky='we')
-            self.frame_elements_sel.grid_remove()
+            self.listbox_elements_selceted.grid_remove()
+
         else:
             self.frame_first_part_set_el.grid_remove()
             self.frame_first_part_range_el.grid_remove()
-            self.frame_elements_sel.grid_remove()
+            self.listbox_elements_selceted.grid_remove()
 
-    def show_selections(self, part):
+    def show_selection_lb(self, part):
         if part == "increments":
-            # clearing frame #
-            if self.list_increments_sel:
-                self.frame_increments_sel.grid_remove()
-                for i in self.list_increments_sel:
-                    i.grid_remove()
-            self.list_increments_sel[:] = []
-            ###########################
-
-            self.frame_increments_sel.grid(row=1, column=1, sticky='nwe')
-            counter = int(self.entry_inc_max.get())
-            for i in range(counter):
-                self.list_increments_sel.append(tk.Checkbutton(self.frame_increments_sel, text=i))
-                self.list_increments_sel[i].grid(row=i)
+            self.listbox_increments_selceted.grid(row=4, column=0)
+            self.listbox_increments_selceted.delete(0, tk.END)
+            counter = self.entry_inc_max.get()
+            if counter:
+                for i in range(int(counter)):
+                    self.listbox_increments_selceted.insert(i, "element %s" % i)
 
         if part == "elements":
-            # clearing frame #
-            self.frame_elements_sel.grid_remove()
-            if self.list_elements_sel:
-                for i in self.list_elements_sel:
-                    i.grid_remove()
-                self.list_elements_sel[:] = []
-            ###########################
-            self.frame_elements_sel.grid(row=1, column=2, sticky='nwe')
-            counter = int(self.entry_el_max.get())
-            for i in range(counter):
-                self.list_elements_sel.append(tk.Checkbutton(self.frame_elements_sel, text=i))
-                self.list_elements_sel[i].grid(row=i)
+            self.listbox_elements_selceted.grid(row=4, column=1)
+            self.listbox_elements_selceted.delete(0, tk.END)
+            counter = self.entry_el_max.get()
+            if counter:
+                for i in range(int(counter)):
+                    self.listbox_elements_selceted.insert(i, "element %s" % i)
+
+    def show_output_request(self):
+        part = self.variable_opt_menu.get()
+        if part == "2D":
+            self.listbox_output_3D.grid_remove()
+            self.listbox_output_2D.grid(row=0, column=1)
+            self.is_acticve3D = False
+
+        if part == "3D":
+            self.listbox_output_2D.grid_remove()
+            self.listbox_output_3D.grid(row=0, column=1)
+            self.is_acticve3D = True
+
+    def show_grains(self):
+        if self.variable_material_menu.get() == "Selected grain":
+            # showing widgets
+            self.entry_add_grain.grid(row=1, column=1, sticky="we")
+            self.entry_add_grain.grid(row=2, column=0, columnspan=2, sticky="we")
+            self.button_add_grain.grid(row=3, column=0, sticky="we")
+            self.button_remove_grain.grid(row=3, column=1, sticky="we")
+            self.listbox_grains.grid(row=4, column=0, columnspan=2, sticky="wesne")
+        else:
+            self.entry_add_grain.grid_remove()
+            self.button_add_grain.grid_remove()
+            self.button_remove_grain.grid_remove()
+            self.entry_add_grain.grid_remove()
+            self.listbox_grains.grid_remove()
+
+    def add_grain(self):
+        name = self.entry_add_grain.get()
+        self.listbox_grains.insert(tk.END, name)
+
+    def remove_grain(self):
+        names = self.listbox_grains.curselection()
+        for i in names:
+            self.listbox_grains.delete(i)
 
 
 class OptionPage(Page):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.parent = parent
+
+        self.frame_options = tk.LabelFrame(self, text="Options")
+        self.frame_options.pack()
+
+        self.button_add_location = tk.
+
+
+    def get_file_path(self):
+        path = tkFileDialog.askopenfilename(parent=self.parent, initialdi='.')
+        config.odb_fullpath = path
+        config.odb_path, config.odb_name = os.path.split(path)
