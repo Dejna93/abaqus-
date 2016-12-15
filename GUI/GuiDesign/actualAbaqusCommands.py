@@ -7,7 +7,8 @@ import abaqusCommands
 class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
     def __init__(self):
         self.specimenWidth = 10.0; self.specimenLength = 10.0; self.specimenHeight = 10.0
-        self.a = 5.0; self.sin60 = 0.866025404; self.tan68 = 2.475086853; self.sphericalRadius = 5.0;
+        self.a = 5.0; self.sin60 = 0.866025404; self.tan68 = 2.475086853; self.tan60 = 1.732050808;
+        self.sphericalRadius = 5.0; self.tan30 = 0.577350269; self.tan65_3 = 2.174155933;
         self.distanceBetweenSpecimenAndIndenter = 0.1; self.indenter = "";
 
     def setindenter(self, indenter, roundingradius=0, sphericalradius=5):
@@ -149,6 +150,8 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
             self.positionSpherical()
         elif self.indenter == "Vickers":
             self.positionVickers()
+        elif self.indenter == "Berkovich":
+            self.positionBerkovich()
 
     def positionSpherical(self):
         a = mdb.models['Model-1'].rootAssembly
@@ -169,6 +172,19 @@ class ActualAbaqusCommands(abaqusCommands.AbaqusCommands):
         a = mdb.models['Model-1'].rootAssembly
         try:
             tmp = float(((self.a/4)/self.tan68) + self.specimenHeight + self.distanceBetweenSpecimenAndIndenter)
+        except ValueError:
+            print('one of the following cannot be converted to float: sphericalRadius, specimenHeight,'
+                  ' or distanceBetweenSpicmenAndIndenter')
+        a.translate(instanceList=('Indenter-1',), vector=(0.0, tmp, 0.0))
+
+    def positionBerkovich(self):
+        a = mdb.models['Model-1'].rootAssembly
+        a.rotate(instanceList=('Indenter-1',), axisPoint=(10.0, 0.0, 0.0),
+                 axisDirection=(-20.0, 0.0, 0.0), angle=-90.0)
+        a = mdb.models['Model-1'].rootAssembly
+        a.translate(instanceList=('Indenter-1',), vector=(0.0, 0.0, -((self.a/4)/self.tan30)/3))
+        try:
+            tmp = float(((((self.a/4)/self.tan30)/3) / self.tan65_3) + self.specimenHeight + self.distanceBetweenSpecimenAndIndenter)
         except ValueError:
             print('one of the following cannot be converted to float: sphericalRadius, specimenHeight,'
                   ' or distanceBetweenSpicmenAndIndenter')
