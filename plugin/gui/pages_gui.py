@@ -2,8 +2,11 @@ import Tkinter as tk
 import os
 import tkFileDialog
 
-from plugin.odb_scripts.getinkrements import test
+from plugin.odb_scripts.source import test
+
 from plugin.settings import config
+from plugin.settings import global_vars_storage
+
 
 class Page(tk.Frame):
     def __init__(self, parent, controller):
@@ -86,9 +89,6 @@ class StartPage(Page):
 
         self.frame_materials = tk.LabelFrame(self, text="Materials")
         self.frame_materials.grid(row=2, column=1, sticky='we')
-
-        self.frame_options = tk.LabelFrame(self, text="Options", height=25)
-        self.frame_options.grid(row=4, column=1, sticky='we')
         ##############
 
         _names = (u"All", u"Set", u"Range")
@@ -112,12 +112,12 @@ class StartPage(Page):
         self.listbox_elements_selceted = tk.Listbox(self.frame_first_part, exportselection=0, selectmode=tk.EXTENDED)
 
         self.listbox_output_2D = tk.Listbox(self.frame_output_request, exportselection=0, selectmode=tk.EXTENDED)
-        _names = ("S", "PEEQ", "EVOL", "SDV121", "U", "T", "UR3", "RF", "RM3")
+        _names = global_vars_storage.vars2D
         self.create_listbox_values(self.listbox_output_2D, _names, width=15, height=10)
         self.listbox_output_2D.grid(row=0, column=1)
 
         self.listbox_output_3D = tk.Listbox(self.frame_output_request, exportselection=0, selectmode=tk.EXTENDED)
-        _names = ("S", "T", "D")
+        _names = global_vars_storage.vars3D
         self.create_listbox_values(self.listbox_output_3D, _names, width=15, height=10)
 
         self.listbox_grains = tk.Listbox(self.frame_materials, exportselection=0, selectmode=tk.EXTENDED)
@@ -155,10 +155,6 @@ class StartPage(Page):
             self.frame_output_request, "Step", 0, 2, 10)
 
         self.entry_name_grain, self.label_add_grain = self.create_entry(self.frame_materials, "Part name", 0, 0, 25)
-
-        self.entry_odb_path = tk.Entry(self.frame_options)
-        self.grid(row=1, column=0)
-
         # last part of gui
         self.entry_add_grain = tk.Entry(self.frame_materials)
         ###############
@@ -170,11 +166,9 @@ class StartPage(Page):
         self.button_remove_grain = tk.Button(
             self.frame_materials, text="Remove grain", command=lambda: self.remove_grain())
 
-        self.button_test = tk.Button(self.frame_options, text="Test czy cokolwiek dziala", command=lambda: test())
-        self.button_test.grid(row=5, column=0, columnspan=2, sticky="we")
+        self.button_test = tk.Button(self, text="Test czy cokolwiek dziala", command=lambda: test())
+        self.button_test.grid(row=5, column=1, columnspan=2, sticky="we")
 
-        self.button_save_location = tk.Button(self.frame_options, text="SaveLocation", command=lambda: self.get_file_path())
-        self.button_save_location.grid(row=4, column=0, columnspan=2, sticky="we")
         ##############
 
         ### selections ###
@@ -291,14 +285,18 @@ class OptionPage(Page):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.parent = parent
+        self.controller = controller
 
-        self.frame_options = tk.LabelFrame(self, text="Options")
-        self.frame_options.pack()
+        self.button_save_location = tk.Button(self, text="SaveLocation", command=lambda: self.get_file_path())
+        self.button_save_location.grid(row=4, column=0, columnspan=2, sticky="we")
 
-        self.button_add_location = tk.
-
+        self.entry_odb_path = tk.Entry(self)
+        self.entry_odb_path.grid(row=1, column=0,  sticky="we")
 
     def get_file_path(self):
-        path = tkFileDialog.askopenfilename(parent=self.parent, initialdi='.')
+        path = tkFileDialog.askopenfilename(parent=self.parent, filetypes=[("ODB files", "*.odb")])
+        self.entry_odb_path.insert(tk.END, path)
         config.odb_fullpath = path
         config.odb_path, config.odb_name = os.path.split(path)
+
+        self.controller.show_frame("StartPage")
