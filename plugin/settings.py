@@ -19,13 +19,22 @@ class GlobalVarsStorage(object):
         for key, value in kwargs.items():
             self.__dict__[key] = value
 
-        self.vars2D = ("S", "PEEQ", "EVOL", "SDV121", "U", "T", "UR3", "RF", "RM3")
-        self.vars3D = ("T", "D", "S")
+        self.odb = ''
+
+        self._vars2D = ("S", "PEEQ", "EVOL", "SDV121", "U", "T", "UR3", "RF", "RM3")
+        self._vars3D = ("T", "D", "S")
+
+        self.vars2D = []
+        self.vars3D = []
+
+        self.parts = {}  # get dict of parts
 
         self.steps = 0
 
-        self.increments_counter = 0
+        self.values_counter = 0
         self.elements_counter = 0
-        self.parts = 0
+        self.parts = {}
+
+
 config = Config()
 global_vars_storage = GlobalVarsStorage()

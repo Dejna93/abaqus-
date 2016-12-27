@@ -1,12 +1,21 @@
 import Tkinter as tk
+
 import os
 import tkFileDialog
+import tkMessageBox
 
-from plugin.odb_scripts.source import test
+from plugin.odb_scripts.source import test, OdbFile
 
 from plugin.settings import config
 from plugin.settings import global_vars_storage
 
+try:
+    from abaqus import *
+    from abaqusConstans import *
+    import visualization
+
+except Exception:
+    pass
 
 class Page(tk.Frame):
     def __init__(self, parent, controller):
@@ -112,13 +121,9 @@ class StartPage(Page):
         self.listbox_elements_selceted = tk.Listbox(self.frame_first_part, exportselection=0, selectmode=tk.EXTENDED)
 
         self.listbox_output_2D = tk.Listbox(self.frame_output_request, exportselection=0, selectmode=tk.EXTENDED)
-        _names = global_vars_storage.vars2D
-        self.create_listbox_values(self.listbox_output_2D, _names, width=15, height=10)
         self.listbox_output_2D.grid(row=0, column=1)
 
         self.listbox_output_3D = tk.Listbox(self.frame_output_request, exportselection=0, selectmode=tk.EXTENDED)
-        _names = global_vars_storage.vars3D
-        self.create_listbox_values(self.listbox_output_3D, _names, width=15, height=10)
 
         self.listbox_grains = tk.Listbox(self.frame_materials, exportselection=0, selectmode=tk.EXTENDED)
 
@@ -151,8 +156,8 @@ class StartPage(Page):
         self.entry_inc_max.bind('<Return>', lambda event: self.show_selection_lb("increments"))
         self.entry_el_max.bind('<Return>', lambda event: self.show_selection_lb("elements"))
 
-        self.entry_step, self.label_step = self.create_entry_integer(
-            self.frame_output_request, "Step", 0, 2, 10)
+        self.listbox_steps = tk.Listbox(self.frame_output_request, height=10)
+        self.listbox_steps.grid(row=0, column=2, sticky='we')
 
         self.entry_name_grain, self.label_add_grain = self.create_entry(self.frame_materials, "Part name", 0, 0, 25)
         # last part of gui
@@ -280,6 +285,16 @@ class StartPage(Page):
         for i in names:
             self.listbox_grains.delete(i)
 
+    def refresh(self):
+        self.create_listbox_values(
+            self.listbox_steps, ["Step: %s" % x for x in range(global_vars_storage.steps)], exportselection=0)
+
+        self.create_listbox_values(self.listbox_output_2D, global_vars_storage.vars2D, width=15, height=10)
+
+        self.create_listbox_values(self.listbox_output_3D, global_vars_storage.vars3D, width=15, height=10)
+
+        print("2D: %s" % global_vars_storage.vars2D)
+
 
 class OptionPage(Page):
     def __init__(self, parent, controller):
@@ -287,11 +302,17 @@ class OptionPage(Page):
         self.parent = parent
         self.controller = controller
 
-        self.button_save_location = tk.Button(self, text="SaveLocation", command=lambda: self.get_file_path())
-        self.button_save_location.grid(row=4, column=0, columnspan=2, sticky="we")
+        self.frame_main = tk.LabelFrame(self, text="Location")
+        self.frame_main.pack()
 
-        self.entry_odb_path = tk.Entry(self)
-        self.entry_odb_path.grid(row=1, column=0,  sticky="we")
+        self.button_save_location = tk.Button(self.frame_main, text="Get ODB", command=lambda: self.get_file_path())
+        self.button_save_location.grid(row=0, column=0, sticky="we")
+
+        self.entry_odb_path = tk.Entry(self.frame_main, width=50)
+        self.entry_odb_path.grid(row=0, column=1,  sticky="we")
+
+        self.button_StartPage = tk.Button(self.frame_main, text="Save ODB location", command=lambda: self.show_start_page())
+        self.button_StartPage.grid(row=1, column=0, columnspan=2, sticky='we')
 
     def get_file_path(self):
         path = tkFileDialog.askopenfilename(parent=self.parent, filetypes=[("ODB files", "*.odb")])
@@ -299,4 +320,16 @@ class OptionPage(Page):
         config.odb_fullpath = path
         config.odb_path, config.odb_name = os.path.split(path)
 
-        self.controller.show_frame("StartPage")
+    def show_start_page(self):
+        try:
+            odbFile = session.openOdb(name=str(os.path.join(config.odb_path, config.odb_name)))
+        except Exception as e:
+            tkMessageBox.showerror("Invalid ODB", "This file is corrupted or it is not ODB file.\n"
+                                                  "Please, submit valid file!\n\n"
+                                                  "ErrorDetails: %s" % e)
+            return None
+        else:
+           odb = OdbFile(odbFile)
+           odb.update_global_storage()
+           self.controller.show_refreshed_frame("StartPage")
+
