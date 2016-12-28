@@ -1,5 +1,6 @@
 import os
 import threading
+import tkMessageBox
 
 try:
     from abaqus import *
@@ -74,28 +75,59 @@ class OdbFile(object):
         storage.steps = self.max_step
         storage.vars2D = self.output2D_variables
         storage.vars3D = self.output3D_variables
+        storage.frameCounter = self.frameCounter
 
         print(self.output2D_variables)
+
 
 class SaveOutput(object):
     def __init__(self):
         self.threads = []
         self.output_files = []
 
-    def create_output(self):
-        thread_inc = threading.Thread(target=self.save_increments)
-        thread_el = threading.Thread(target=self.save_elements)
+        self.materials_txt_file = ''
+        self.increments_txt_file = ''
 
-        self.threads.append(thread_inc)
-        self.threads.append(thread_el)
-        thread_inc.start()
-        thread_el.start()
+        self.storage = global_vars_storage
 
-    def save_increments(self):
-        pass
+    def create_inc_files(self, *args, **kwargs):
+        try:
+            self.storage.increments_txt_file = open(os.path.join(config.output_path, "increments.txt"), mode='w')
+        except IOError as e:
+            tkMessageBox.showerror("InvalidFile", "This file can not be created!\n\nErrorDetails: %s" % e)
 
-    def save_elements(self):
-        pass
+    def create_mat_files(self, *args, **kwargs):
+        try:
+            self.storage.materials_txt_file = open(os.path.join(config.output_path, "materials.txt"), mode='w')
+        except IOError as e:
+            tkMessageBox.showerror("InvalidFile", "This file can not be created!\n\nErrorDetails: %s" % e)
 
-    def collect_options(self):
+    def collect_options(self, range):
+        values = self.storage.odb.steps.values()
+        values_dict ={}
+        if self.storage.selected_vars2D:
+            for frame in range(range): # parallelism, range eg [0,15]
+                for var in self.storage.selected_vars2D:
+                    values_dict[var] = values[0].frames[i].fieldOutputs[var]
+                for j in range(0, self.storage.values_counter):
+                    output_string = '%d' % j
+                    for key, value in values_dict.items():
+                        if key == "S":
+                            output_string += ":%s" % value.values[j].elementLabel-1
+                            output_string += ":%s" % value.values[j].mises
+                        output_string += ":%s" % value.values[j].data
+
+        if self.storage.selected_vars3D:
+            for frame in range(range):  # parallelism, range eg [0,15]
+                for var in self.storage.selected_vars2D:
+                    values_dict[var] = values[0].frames[i].fieldOutputs[var]
+                for j in range(0, self.storage.values_counter):
+                    output_string = '%d' % j
+                    for key, value in values_dict.items():
+                        if key == "S":
+                            output_string += ":%s" % value.values[j].elementLabel - 1
+                            output_string += ":%s" % value.values[j].mises
+                        output_string += ":%s" % value.values[j].data
+
+    def write_file(self, file_name, text_to_save):
         pass

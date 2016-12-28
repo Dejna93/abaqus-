@@ -11,6 +11,8 @@ class Config(object):
         self.odb_name = ''
         self.odb_fullpath = ''
 
+        self.output_path = ''
+
         # self.odbFile = OdbFile()
 
 
@@ -27,14 +29,21 @@ class GlobalVarsStorage(object):
         self.vars2D = []
         self.vars3D = []
 
+        self.selected_vars2D = []
+        self.selected_vars3D = []
+
         self.parts = {}  # get dict of parts
 
         self.steps = 0
 
         self.values_counter = 0
         self.elements_counter = 0
+        self.frameCounter = 0
         self.parts = {}
 
+        # Output files
+        self.materials_txt_file = ''
+        self.increments_txt_file = ''
 
 config = Config()
 global_vars_storage = GlobalVarsStorage()
