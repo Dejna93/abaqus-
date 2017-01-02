@@ -1,4 +1,4 @@
-# from plugin.odb_scripts.source import OdbFile
+
 class Config(object):
     def __init__(self, *args, **kwargs):
         for key, value in kwargs.items():
@@ -11,9 +11,7 @@ class Config(object):
         self.odb_name = ''
         self.odb_fullpath = ''
 
-        self.output_path = ''
-
-        # self.odbFile = OdbFile()
+        self.output_path = '.'
 
 
 class GlobalVarsStorage(object):
@@ -28,6 +26,8 @@ class GlobalVarsStorage(object):
 
         self.vars2D = []
         self.vars3D = []
+
+        self.selected_vars_kind = ""
 
         self.selected_vars2D = []
         self.selected_vars3D = []

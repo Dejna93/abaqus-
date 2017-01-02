@@ -4,7 +4,7 @@ import os
 import tkFileDialog
 import tkMessageBox
 
-from plugin.odb_scripts.source import test, OdbFile
+from plugin.odb_scripts.source import save_out, OdbFile
 
 from plugin.settings import config
 from plugin.settings import global_vars_storage
@@ -16,6 +16,7 @@ try:
 
 except Exception:
     pass
+
 
 class Page(tk.Frame):
     def __init__(self, parent, controller):
@@ -171,7 +172,7 @@ class StartPage(Page):
         self.button_remove_grain = tk.Button(
             self.frame_materials, text="Remove grain", command=lambda: self.remove_grain())
 
-        self.button_test = tk.Button(self, text="Test czy cokolwiek dziala", command=lambda: test())
+        self.button_test = tk.Button(self, text="Test generowania plikow", command=lambda: save_out.create_file())
         self.button_test.grid(row=5, column=1, columnspan=2, sticky="we")
 
         ##############
@@ -251,6 +252,7 @@ class StartPage(Page):
 
     def show_output_request(self):
         part = self.variable_opt_menu.get()
+        global_vars_storage.selected_vars_kind = part
         if part == "2D":
             self.listbox_output_3D.grid_remove()
             self.listbox_output_2D.grid(row=0, column=1)
@@ -292,8 +294,6 @@ class StartPage(Page):
         self.create_listbox_values(self.listbox_output_2D, global_vars_storage.vars2D, width=15, height=10)
 
         self.create_listbox_values(self.listbox_output_3D, global_vars_storage.vars3D, width=15, height=10)
-
-        print("2D: %s" % global_vars_storage.vars2D)
 
 
 class OptionPage(Page):

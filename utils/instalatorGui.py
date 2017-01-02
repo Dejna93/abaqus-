@@ -180,11 +180,6 @@ class MainPage(tk.Frame):
             self.text_console_output.insert(tk.END, "Output from pip: %s\n" % output)
             self.text_console_output.insert(tk.END, "Errors: %s\n" % errors)
 
-    def test_threading(self):
-        while True:
-            print("Look a while true loop that doesn't block the GUI!")
-            time.sleep(1)
-
     def run_command(self):
         self.text_console_output.delete('1.0', tk.END)  # clear textarea
         output, errors = manage_plugin.python_command(self._v_python_comand.get())
