@@ -13,6 +13,8 @@ class Config(object):
 
         self.output_path = '.'
 
+        self.req = ("futures", "matplotlib")
+
 
 class GlobalVarsStorage(object):
     def __init__(self, *args, **kwargs):
@@ -27,10 +29,7 @@ class GlobalVarsStorage(object):
         self.vars2D = []
         self.vars3D = []
 
-        self.selected_vars_kind = ""
-
-        self.selected_vars2D = []
-        self.selected_vars3D = []
+        self.selected_vars_kind = "2D"
 
         self.parts = {}  # get dict of parts
 

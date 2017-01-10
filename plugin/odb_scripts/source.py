@@ -3,13 +3,7 @@ import threading
 import tkMessageBox
 import multiprocessing
 
-try:
-    from abaqus import *
-    from abaqusConstans import *
-    import visualization
-
-except Exception:
-    pass
+from plugin.odb_scripts.save_file import save_file
 
 from plugin.settings import config
 from plugin.settings import global_vars_storage
@@ -77,6 +71,7 @@ class OdbFile(object):
         storage.vars2D = self.output2D_variables
         storage.vars3D = self.output3D_variables
         storage.frameCounter = self.frameCounter
+        storage.odb = self.odb
 
 
 class SaveOutput(object):
@@ -89,65 +84,71 @@ class SaveOutput(object):
         self.storage = global_vars_storage
 
     def create_file(self):
-        jobs = []
-        step = self.storage.frameCounter/multiprocessing.cpu_count() + \
-               self.storage.frameCounter%multiprocessing.cpu_count() > 0  # rounding up!
-        int(21 / 5) + (21 % 5 > 0)
-        print ("P %s S %s" % (multiprocessing.cpu_count(), self.storage.frameCounter))
-        print ("Step: ", step)
-        print "Create file"
-        for start in range(0, self.storage.frameCounter, step):
-            end = start+step
-            if start+step > self.storage.frameCounter:
-                end = self.storage.frameCounter
-            rang = (start, end)
-            print "range: ", rang
-            p = threading.Process(target=self.save_file, args=(rang,))
-            jobs.append(p)
-            print "Starting process"
-            p.start()
+        # jobs = []
+        # step = self.storage.frameCounter/multiprocessing.cpu_count() + \
+        #        self.storage.frameCounter%multiprocessing.cpu_count() > 0  # rounding up!
+        # int(21 / 5) + (21 % 5 > 0)
+        # print "Create file"
+        # pool = ProcessPoolExecutor(max_workers=multiprocessing.cpu_count())
+        # for start in range(0, self.storage.frameCounter, step):
+        #     end = start+step
+        #     print("Start: %s End: %s" % (start, end))
+        #     if start+step > self.storage.frameCounter:
+        #         end = self.storage.frameCounter
+        #     rang = (start, end)
+        #     print "range: ", rang
+        #     jobs.append(pool.submit(save_file, rang, self.storage))
+        #     print "Starting process"
+        #     wait(jobs)
 
-        for job in jobs:
+        for i in range(self.storage.frameCounter):
+            self.save_file(i, self.storage)
 
-            job.join()
-
-    def save_file(self, range):
+    def save_file(self, iter, storage):
         """
         :param range: It is for range (framecounter) for every running proces (parallelism)
         :return: Nothing, it is only save file
         """
-        values = self.storage.odb.steps.values()
+        values = storage.odb.steps.values()
         values_dict = {}
-        if self.storage.selected_vars_kind == "2D":
-            for frame in range(range):  # parallelism, range eg [0,15]
-                output_file = os.path.join(config.output_path, "Increment%s.txt" % frame)
-                print "Tworzenie pliku\nPath: %s" % output_file
-                with open(output_file, mode='w') as file:
-                    for var in self.storage.selected_vars2D:
-                        values_dict[var] = values[0].frames[frame].fieldOutputs[var]
-                    for j in range(0, self.storage.values_counter):
-                        output_string = '%d' % j
-                        for key, value in values_dict.items():
-                            if key == "S":
-                                output_string += ":%s" % value.values[j].elementLabel-1
-                                output_string += ":%s" % value.values[j].mises
+        print("Working increment %s" % iter)
+        if storage.selected_vars_kind == "2D":
+            output_file = os.path.join(config.output_path, "Increment%s.txt" % iter)
+            with open(output_file, mode='w') as file:
+                for var in storage.vars2D:
+                    values_dict[var] = values[0].frames[iter].fieldOutputs[var]
+                values_counter = len(values[0].frames[0].fieldOutputs[storage.vars2D[0]].values)
+                for j in range(0, values_counter):
+                    output_string = '%d' % j
+                    for key, value in values_dict.items():
+                        if key == "S":
+                            output_string += ":%s" % value.values[j].elementLabel
+                            output_string += ":%s" % value.values[j].mises
+                        try:
+                            output_string += ":%s" % value.values[j].data[0]
+                            output_string += ":%s" % value.values[j].data[1]
+                        except Exception:
                             output_string += ":%s" % value.values[j].data
-                    file.write(output_string+'\n')
 
-        if self.storage.selected_vars_kind == "3D":
-            for frame in range(range):  # parallelism, range eg [0,15]
-                output_file = os.path.join(config.output_path, "Increment%s.txt" % frame)
-                with open(output_file, mode='w') as file:
-                    for var in self.storage.selected_vars3D:
-                        values_dict[var] = values[0].frames[frame].fieldOutputs[var]
-                    for j in range(0, self.storage.values_counter):
-                        output_string = '%d' % j
-                        for key, value in values_dict.items():
-                            if key == "S":
-                                output_string += ":%s" % value.values[j].elementLabel - 1
-                                output_string += ":%s" % value.values[j].mises
-                            output_string += ":%s" % value.values[j].data
-                            self.write_file("%s.txt" % frame, output_string)
-                        file.write(output_string + '\n')
+                    file.write(output_string + '\n')
+
+        if storage.selected_vars_kind == "3D":
+            output_file = os.path.join(config.output_path, "Increment%s.txt" % iter)
+            with open(output_file, mode='w') as file:
+                for var in storage.vars3D:
+                    values_dict[var] = values[0].frames[iter].fieldOutputs[var]
+                values_counter = len(values[0].frames[0].fieldOutputs[storage.vars2D[0]].values)
+                for j in range(0, values_counter):
+                    output_string = '%d' % j
+                    for key, value in values_dict.items():
+                        if key == "S":
+                            output_string += ":%s" % str(value.values[j].elementLabel -1)
+                            output_string += ":%s" % value.values[j].mises
+                        if key == "U":
+                            output_string += ":%s" % value.values[j].data[0]
+                            output_string += ":%s" % value.values[j].data[1]
+
+                        output_string += ":%s" % value.values[j]
+                    file.write(output_string + '\n')
 
 save_out = SaveOutput()

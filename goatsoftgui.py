@@ -1,10 +1,23 @@
+import multiprocessing
 import threading
+import tkMessageBox
 
 from plugin.gui.pages_gui import OptionPage
 from plugin.gui.pages_gui import StartPage
 import Tkinter as tk
 
 from plugin.settings import config
+
+try:
+    from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, wait
+    import matplotlib
+except ImportError:
+    tkMessageBox.showerror(
+        title="Library import error",
+        message="You have to install necessary librarys\n"
+                "Please read 'Readme.txt'",
+    )
+    pass
 
 
 class Core(tk.Tk):
@@ -42,11 +55,14 @@ class Core(tk.Tk):
 
 
 def run_gui():
+    pool = ThreadPoolExecutor(max_workers=4)
+    pool.submit(start_app())
+    wait(pool)
+
+def start_app():
     app = Core()
     app.minsize(width=config.window_width, height=config.window_height)
     app.mainloop()
 
 if __name__ == '__main__':
     run_gui()
-    t = threading.Thread(target=run_gui())
-    t.start()

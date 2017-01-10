@@ -8,9 +8,6 @@ from settings import config
 import pip
 import importlib
 from zipfile import ZipFile, error as zfError
-import threading
-import Tkinter as tk
-
 
 class AbaqusInstalator(object):
     def __init__(self):

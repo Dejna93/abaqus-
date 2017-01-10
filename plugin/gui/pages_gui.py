@@ -1,11 +1,13 @@
 import Tkinter as tk
-
 import os
 import tkFileDialog
 import tkMessageBox
+import subprocess as sub
+
+import pip
+import sys
 
 from plugin.odb_scripts.source import save_out, OdbFile
-
 from plugin.settings import config
 from plugin.settings import global_vars_storage
 
@@ -86,13 +88,13 @@ class StartPage(Page):
         self.frame_first_part.grid(row=0, column=0, sticky='we')
 
         self.frame_first_part_set_el = tk.LabelFrame(self.frame_first_part, height=25)
-        self.frame_first_part.grid(row=0, column=1,  sticky='we')
+        self.frame_first_part.grid(row=0, column=1, sticky='we')
 
         self.frame_first_part_range_inc = tk.LabelFrame(self.frame_first_part, height=25)
         self.frame_first_part.grid(row=1, column=0, sticky='we')
 
         self.frame_first_part_range_el = tk.LabelFrame(self.frame_first_part, height=25)
-        self.frame_first_part.grid(row=0, column=1,  sticky='we')
+        self.frame_first_part.grid(row=0, column=1, sticky='we')
 
         self.frame_output_request = tk.LabelFrame(self, text="Outputs", height=25)
         self.frame_output_request.grid(row=1, column=1, columnspan=2, sticky='we')
@@ -172,7 +174,7 @@ class StartPage(Page):
         self.button_remove_grain = tk.Button(
             self.frame_materials, text="Remove grain", command=lambda: self.remove_grain())
 
-        self.button_test = tk.Button(self, text="Test generowania plikow", command=lambda: save_out.create_file())
+        self.button_test = tk.Button(self, text="Test generowania plikow", command=lambda: self.create_save_file())
         self.button_test.grid(row=5, column=1, columnspan=2, sticky="we")
 
         ##############
@@ -287,9 +289,19 @@ class StartPage(Page):
         for i in names:
             self.listbox_grains.delete(i)
 
+    def create_save_file(self):
+        _options = {}
+        _options['mustexist'] = False
+        _options['parent'] = self.parent
+        config.output_path = tkFileDialog.askdirectory(**_options)
+        if not config.output_path:
+            tkMessageBox.showinfo(message=u"You have to choose output directory")
+        print u"Creating files."
+        save_out.create_file()
+
     def refresh(self):
         self.create_listbox_values(
-            self.listbox_steps, ["Step: %s" % x for x in range(global_vars_storage.steps)], exportselection=0)
+            self.listbox_steps, [u"Step: %s" % x for x in range(global_vars_storage.steps)], exportselection=0)
 
         self.create_listbox_values(self.listbox_output_2D, global_vars_storage.vars2D, width=15, height=10)
 
@@ -309,10 +321,14 @@ class OptionPage(Page):
         self.button_save_location.grid(row=0, column=0, sticky="we")
 
         self.entry_odb_path = tk.Entry(self.frame_main, width=50)
-        self.entry_odb_path.grid(row=0, column=1,  sticky="we")
+        self.entry_odb_path.grid(row=0, column=1, sticky="we")
 
-        self.button_StartPage = tk.Button(self.frame_main, text="Save ODB location", command=lambda: self.show_start_page())
+        self.button_StartPage = tk.Button(self.frame_main, text="Save ODB location",
+                                          command=lambda: self.show_start_page())
         self.button_StartPage.grid(row=1, column=0, columnspan=2, sticky='we')
+
+        self.text_area = tk.Text(self.frame_main)
+        self.text_area.grid(row=2, column=0, columnspan=2, sticky='we')
 
     def get_file_path(self):
         path = tkFileDialog.askopenfilename(parent=self.parent, filetypes=[("ODB files", "*.odb")])
@@ -329,7 +345,6 @@ class OptionPage(Page):
                                                   "ErrorDetails: %s" % e)
             return None
         else:
-           odb = OdbFile(odbFile)
-           odb.update_global_storage()
-           self.controller.show_refreshed_frame("StartPage")
-
+            odb = OdbFile(odbFile)
+            odb.update_global_storage()
+            self.controller.show_refreshed_frame("StartPage")
