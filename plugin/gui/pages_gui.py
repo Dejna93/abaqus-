@@ -2,10 +2,6 @@ import Tkinter as tk
 import os
 import tkFileDialog
 import tkMessageBox
-import subprocess as sub
-
-import pip
-import sys
 
 from plugin.odb_scripts.source import save_out, OdbFile
 from plugin.settings import config
@@ -289,14 +285,36 @@ class StartPage(Page):
         for i in names:
             self.listbox_grains.delete(i)
 
+    def get_selected_vars(self):
+        if global_vars_storage.selected_vars_kind == "2D":
+            values = self.listbox_output_2D.curselection()
+            for i in values:
+                global_vars_storage.selected_vars.append(self.listbox_output_2D.get(i))
+        else:
+            values = self.listbox_output_3D.curselection()
+            for i in values:
+                global_vars_storage.selected_vars.append(self.listbox_output_3D.get(i))
+        print("Selected vars", global_vars_storage.selected_vars)
+
+    def get_range_inc_mat(self):
+        option = self.listbox_increments.get(self.listbox_increments)
+
+        if option == "Set":
+            pass
+        elif option == "Range":
+            pass
+        else:
+            pass
+
     def create_save_file(self):
-        _options = {}
-        _options['mustexist'] = False
-        _options['parent'] = self.parent
+        _options = {'mustexist': False, 'parent': self.parent}
         config.output_path = tkFileDialog.askdirectory(**_options)
         if not config.output_path:
             tkMessageBox.showinfo(message=u"You have to choose output directory")
         print u"Creating files."
+
+        self.get_selected_vars()
+
         save_out.create_file()
 
     def refresh(self):

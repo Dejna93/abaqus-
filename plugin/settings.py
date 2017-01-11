@@ -29,20 +29,23 @@ class GlobalVarsStorage(object):
         self.vars2D = []
         self.vars3D = []
 
+        self.selected_vars = []
+
         self.selected_vars_kind = "2D"
 
         self.parts = {}  # get dict of parts
 
         self.steps = 0
 
+        self.values = 0
+
         self.values_counter = 0
         self.elements_counter = 0
         self.frameCounter = 0
         self.parts = {}
 
-        # Output files
-        self.materials_txt_file = ''
-        self.increments_txt_file = ''
+        self.increments = [0, self.values_counter]
+        self.material_range = [0, self.values_counter]
 
 config = Config()
 global_vars_storage = GlobalVarsStorage()

@@ -72,7 +72,8 @@ class OdbFile(object):
         storage.vars3D = self.output3D_variables
         storage.frameCounter = self.frameCounter
         storage.odb = self.odb
-
+        storage.values = storage.odb.steps.values()
+        storage.values_counter = len(storage.values[0].frames[0].fieldOutputs["S"].values)
 
 class SaveOutput(object):
     def __init__(self):
@@ -84,71 +85,52 @@ class SaveOutput(object):
         self.storage = global_vars_storage
 
     def create_file(self):
-        # jobs = []
-        # step = self.storage.frameCounter/multiprocessing.cpu_count() + \
-        #        self.storage.frameCounter%multiprocessing.cpu_count() > 0  # rounding up!
-        # int(21 / 5) + (21 % 5 > 0)
-        # print "Create file"
-        # pool = ProcessPoolExecutor(max_workers=multiprocessing.cpu_count())
-        # for start in range(0, self.storage.frameCounter, step):
-        #     end = start+step
-        #     print("Start: %s End: %s" % (start, end))
-        #     if start+step > self.storage.frameCounter:
-        #         end = self.storage.frameCounter
-        #     rang = (start, end)
-        #     print "range: ", rang
-        #     jobs.append(pool.submit(save_file, rang, self.storage))
-        #     print "Starting process"
-        #     wait(jobs)
 
         for i in range(self.storage.frameCounter):
-            self.save_file(i, self.storage)
+            self.save_increments(i, self.storage)
 
-    def save_file(self, iter, storage):
+        self.save_materials(self.storage)
+
+    def save_increments(self, iter, storage):
         """
         :param range: It is for range (framecounter) for every running proces (parallelism)
         :return: Nothing, it is only save file
         """
         values = storage.odb.steps.values()
         values_dict = {}
+
         print("Working increment %s" % iter)
         if storage.selected_vars_kind == "2D":
-            output_file = os.path.join(config.output_path, "Increment%s.txt" % iter)
+            output_dir = os.path.join(config.output_path, config.odb_name.split('.')[0])
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+            output_file = os.path.join(output_dir, "Increment%s.txt" % iter)
             with open(output_file, mode='w') as file:
                 for var in storage.vars2D:
                     values_dict[var] = values[0].frames[iter].fieldOutputs[var]
-                values_counter = len(values[0].frames[0].fieldOutputs[storage.vars2D[0]].values)
-                for j in range(0, values_counter):
-                    output_string = '%d' % j
+                for i in range(0, storage.values_counter):
+                    output_string = '%d' % i
                     for key, value in values_dict.items():
                         if key == "S":
-                            output_string += ":%s" % value.values[j].elementLabel
-                            output_string += ":%s" % value.values[j].mises
+                            output_string += ":%s" % str(value.values[i].elementLabel - 1)
+                            output_string += ":%s" % value.values[i].mises
                         try:
-                            output_string += ":%s" % value.values[j].data[0]
-                            output_string += ":%s" % value.values[j].data[1]
-                        except Exception:
-                            output_string += ":%s" % value.values[j].data
+                            for j in value.values[i].data:
+                                output_string += ":%s" % j
 
                     file.write(output_string + '\n')
+            return True
 
         if storage.selected_vars_kind == "3D":
-            output_file = os.path.join(config.output_path, "Increment%s.txt" % iter)
-            with open(output_file, mode='w') as file:
-                for var in storage.vars3D:
-                    values_dict[var] = values[0].frames[iter].fieldOutputs[var]
-                values_counter = len(values[0].frames[0].fieldOutputs[storage.vars2D[0]].values)
-                for j in range(0, values_counter):
-                    output_string = '%d' % j
-                    for key, value in values_dict.items():
-                        if key == "S":
-                            output_string += ":%s" % str(value.values[j].elementLabel -1)
-                            output_string += ":%s" % value.values[j].mises
-                        if key == "U":
-                            output_string += ":%s" % value.values[j].data[0]
-                            output_string += ":%s" % value.values[j].data[1]
+            return True
 
-                        output_string += ":%s" % value.values[j]
-                    file.write(output_string + '\n')
+        return False
+
+    def save_materials(self, storage):
+        output_file = os.path.join(config.output_path, "%s\\materials.txt" % config.odb_name)
+        with open(output_file, mode='w') as file:
+            file.write("%s:%s" % (storage.values_counter, storage.frameCounter))
+            for i in range(storage.material_range):
+                file.write("%s:0\n" % i)
 
 save_out = SaveOutput()
