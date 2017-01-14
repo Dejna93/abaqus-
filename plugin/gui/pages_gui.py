@@ -3,7 +3,7 @@ import os
 import tkFileDialog
 import tkMessageBox
 
-from plugin.odb_scripts.source import save_out, OdbFile
+from plugin.odb_scripts.source import odb_reader
 from plugin.settings import config
 from plugin.settings import global_vars_storage
 
@@ -77,27 +77,42 @@ class StartPage(Page):
         self.is_acticve3D = False
 
         ### frames ###
+        self.frame_odb_option = tk.LabelFrame(self, text="Odb options")
+        self.frame_odb_option.grid(row=0, column=0, columnspan=2, sticky="we")
+
         self.frame_first_part = tk.LabelFrame(self, text="Increments and elements", height=100, padx=10, pady=10)
-        self.frame_first_part.grid(row=0, column=0, columnspan=2, sticky="we")
+        self.frame_first_part.grid(row=1, column=0, columnspan=2, sticky="we")
 
         self.frame_first_part_set_inc = tk.LabelFrame(self.frame_first_part, height=25)
-        self.frame_first_part.grid(row=0, column=0, sticky='we')
-
-        self.frame_first_part_set_el = tk.LabelFrame(self.frame_first_part, height=25)
-        self.frame_first_part.grid(row=0, column=1, sticky='we')
-
-        self.frame_first_part_range_inc = tk.LabelFrame(self.frame_first_part, height=25)
         self.frame_first_part.grid(row=1, column=0, sticky='we')
 
+        self.frame_first_part_set_el = tk.LabelFrame(self.frame_first_part, height=25)
+        self.frame_first_part.grid(row=1, column=1, sticky='we')
+
+        self.frame_first_part_range_inc = tk.LabelFrame(self.frame_first_part, height=25)
+        self.frame_first_part.grid(row=2, column=0, sticky='we')
+
         self.frame_first_part_range_el = tk.LabelFrame(self.frame_first_part, height=25)
-        self.frame_first_part.grid(row=0, column=1, sticky='we')
+        self.frame_first_part.grid(row=1, column=1, sticky='we')
 
         self.frame_output_request = tk.LabelFrame(self, text="Outputs", height=25)
-        self.frame_output_request.grid(row=1, column=1, columnspan=2, sticky='we')
+        self.frame_output_request.grid(row=2, column=1, columnspan=2, sticky='we')
 
         self.frame_materials = tk.LabelFrame(self, text="Materials")
-        self.frame_materials.grid(row=2, column=1, sticky='we')
-        ##############
+        self.frame_materials.grid(row=3, column=1, sticky='we')
+
+        ####
+        self.button_save_location = tk.Button(
+            self.frame_odb_option, text="Get ODB", command=lambda: self.get_file_path())
+        self.button_save_location.grid(row=0, column=0, sticky="we")
+
+        self.entry_odb_path = tk.Entry(self.frame_odb_option, width=50)
+        self.entry_odb_path.grid(row=0, column=1, sticky="we")
+
+        self.button_StartPage = tk.Button(self.frame_odb_option, text="Save ODB location",
+                                          command=lambda: self.open_odb_file())
+        self.button_StartPage.grid(row=1, column=0, columnspan=2, sticky='we')
+        ####
 
         _names = (u"All", u"Set", u"Range")
 
@@ -107,17 +122,16 @@ class StartPage(Page):
         self.label_elements = tk.Label(self.frame_first_part, text=u"Elements")
         self.label_elements.grid(row=0, column=1, sticky='we')
 
-        ### listboxes ###
         self.listbox_increments = tk.Listbox(self.frame_first_part, height=3)
         self.listbox_increments.grid(row=1, column=0, sticky='we')
         self.create_listbox_values(self.listbox_increments, _names, exportselection=0)
 
-        self.listbox_elements = tk.Listbox(self.frame_first_part, height=3)
-        self.listbox_elements.grid(row=1, column=1, sticky='we')
-        self.create_listbox_values(self.listbox_elements, _names, exportselection=0)
+        self.listbox_materials = tk.Listbox(self.frame_first_part, height=3)
+        self.listbox_materials.grid(row=1, column=1, sticky='we')
+        self.create_listbox_values(self.listbox_materials, _names, exportselection=0)
 
         self.listbox_increments_selceted = tk.Listbox(self.frame_first_part, exportselection=0, selectmode=tk.EXTENDED)
-        self.listbox_elements_selceted = tk.Listbox(self.frame_first_part, exportselection=0, selectmode=tk.EXTENDED)
+        self.listbox_materials_selceted = tk.Listbox(self.frame_first_part, exportselection=0, selectmode=tk.EXTENDED)
 
         self.listbox_output_2D = tk.Listbox(self.frame_output_request, exportselection=0, selectmode=tk.EXTENDED)
         self.listbox_output_2D.grid(row=0, column=1)
@@ -126,13 +140,9 @@ class StartPage(Page):
 
         self.listbox_grains = tk.Listbox(self.frame_materials, exportselection=0, selectmode=tk.EXTENDED)
 
-        ##################
-        ### listboxex commands ###
         self.listbox_increments.bind('<<ListboxSelect>>', lambda event: self.show_first_part_inc())
-        self.listbox_elements.bind('<<ListboxSelect>>', lambda event: self.show_first_part_el())
-        ##########################
+        self.listbox_materials.bind('<<ListboxSelect>>', lambda event: self.show_first_part_el())
 
-        ### entires ###
         self.entry_inc_max, self.label_inc_max = self.create_entry_integer(
             self.frame_first_part_set_inc, u"Max", 0, 0, 3)
         self.entry_inc_max.insert(0, 1)
@@ -142,28 +152,25 @@ class StartPage(Page):
         self.entry_inc_end, self.label_inc_end = self.create_entry_integer(
             self.frame_first_part_range_inc, u"End", 1, 0, 3)
 
-        self.entry_el_max, self.label_el_max = self.create_entry_integer(
+        self.entry_mat_max, self.label_mat_max = self.create_entry_integer(
             self.frame_first_part_set_el, u"Max", 0, 0, 3)
-        self.entry_el_max.insert(0, 1)
+        self.entry_mat_max.insert(0, 1)
 
-        self.entry_el_start, self.label_el_start = self.create_entry_integer(
+        self.entry_mat_start, self.label_mat_start = self.create_entry_integer(
             self.frame_first_part_range_el, u"Start", 0, 0, 3)
 
-        self.entry_el_end, self.label_el_end = self.create_entry_integer(
+        self.entry_mat_end, self.label_mat_end = self.create_entry_integer(
             self.frame_first_part_range_el, u"End", 1, 0, 3)
 
         self.entry_inc_max.bind('<Return>', lambda event: self.show_selection_lb("increments"))
-        self.entry_el_max.bind('<Return>', lambda event: self.show_selection_lb("elements"))
+        self.entry_mat_max.bind('<Return>', lambda event: self.show_selection_lb("elements"))
 
         self.listbox_steps = tk.Listbox(self.frame_output_request, height=10)
         self.listbox_steps.grid(row=0, column=2, sticky='we')
 
         self.entry_name_grain, self.label_add_grain = self.create_entry(self.frame_materials, "Part name", 0, 0, 25)
-        # last part of gui
         self.entry_add_grain = tk.Entry(self.frame_materials)
-        ###############
 
-        ### buttons ###
         self.button_add_grain = tk.Button(
             self.frame_materials, text="Add grain", command=lambda: self.add_grain())
 
@@ -173,14 +180,9 @@ class StartPage(Page):
         self.button_test = tk.Button(self, text="Test generowania plikow", command=lambda: self.create_save_file())
         self.button_test.grid(row=5, column=1, columnspan=2, sticky="we")
 
-        ##############
-
-        ### selections ###
         self.list_increments_sel = []
         self.list_elements_sel = []
-        ##################
 
-        ### optmemnu ###
         _names = ["2D", "3D"]
         self.variable_opt_menu = tk.StringVar(self.frame_output_request)
         self.variable_opt_menu.set(_names[0])  # default value
@@ -198,7 +200,6 @@ class StartPage(Page):
         self.menu_materials = tk.OptionMenu(
             self.frame_materials, self.variable_material_menu, *_names, command=lambda mat: self.show_grains())
         self.menu_materials.grid(row=1, column=0, columnspan=2, sticky="wnse")
-        #################
 
     def show_first_part_inc(self):
         increments = self.listbox_increments.get(self.listbox_increments.curselection())
@@ -216,7 +217,7 @@ class StartPage(Page):
             self.listbox_increments_selceted.grid_remove()
 
     def show_first_part_el(self):
-        elements = self.listbox_elements.get(self.listbox_elements.curselection())
+        elements = self.listbox_materials.get(self.listbox_materials.curselection())
         if elements == u"Set":
             self.frame_first_part_range_el.grid_remove()
             self.frame_first_part_set_el.grid(row=2, column=1, sticky='we')
@@ -224,12 +225,12 @@ class StartPage(Page):
         elif elements == u"Range":
             self.frame_first_part_set_el.grid_remove()
             self.frame_first_part_range_el.grid(row=2, column=1, sticky='we')
-            self.listbox_elements_selceted.grid_remove()
+            self.listbox_materials_selceted.grid_remove()
 
         else:
             self.frame_first_part_set_el.grid_remove()
             self.frame_first_part_range_el.grid_remove()
-            self.listbox_elements_selceted.grid_remove()
+            self.listbox_materials_selceted.grid_remove()
 
     def show_selection_lb(self, part):
         if part == "increments":
@@ -241,12 +242,12 @@ class StartPage(Page):
                     self.listbox_increments_selceted.insert(i, "element %s" % i)
 
         if part == "elements":
-            self.listbox_elements_selceted.grid(row=4, column=1)
-            self.listbox_elements_selceted.delete(0, tk.END)
-            counter = self.entry_el_max.get()
+            self.listbox_materials_selceted.grid(row=4, column=1)
+            self.listbox_materials_selceted.delete(0, tk.END)
+            counter = self.entry_mat_max.get()
             if counter:
                 for i in range(int(counter)):
-                    self.listbox_elements_selceted.insert(i, "element %s" % i)
+                    self.listbox_materials_selceted.insert(i, "element %s" % i)
 
     def show_output_request(self):
         part = self.variable_opt_menu.get()
@@ -290,21 +291,58 @@ class StartPage(Page):
             values = self.listbox_output_2D.curselection()
             for i in values:
                 global_vars_storage.selected_vars.append(self.listbox_output_2D.get(i))
-        else:
+                # global_vars_storage.values = global_vars_storage.odb.steps.values()
+
+                try:
+                    global_vars_storage.values_counter = len(
+                        global_vars_storage.values[0].frames[0].fieldOutputs["S"].values)
+                except Exception:
+                    tkMessageBox.showerror(
+                        message="The odb is corrupted!"
+                    )
+                    global_vars_storage.values_counter = 0
+
+        if global_vars_storage.selected_vars_kind == "2D":
             values = self.listbox_output_3D.curselection()
             for i in values:
                 global_vars_storage.selected_vars.append(self.listbox_output_3D.get(i))
-        print("Selected vars", global_vars_storage.selected_vars)
 
     def get_range_inc_mat(self):
-        option = self.listbox_increments.get(self.listbox_increments)
-
+        temp = self.listbox_increments.curselection()
+        option = self.listbox_increments.get(temp)
         if option == "Set":
-            pass
+            print("Im in get range -> Set")
+            _range = []
+            values = self.listbox_increments_selceted.curselection()
+            print(values)
+            for i in values:
+                _range.append(self.listbox_increments_selceted.get(int(i.split()[1])))  # i=="increment 0"
+            global_vars_storage.increments_range = _range[:]
         elif option == "Range":
-            pass
+            start = self.entry_inc_start.get()
+            end = self.entry_inc_end.get()
+            _range = (x for x in range(start, end))
+            global_vars_storage.increments_range = _range
         else:
-            pass
+            _range = (x for x in range(0, global_vars_storage.values_counter))
+            global_vars_storage.increments_range = _range
+
+        temp = self.listbox_materials.curselection()
+        option = self.listbox_materials.get(temp)
+        if option == "Set":
+            _range = []
+            values = self.listbox_materials_selceted.curselection()
+            for i in values:
+                _range.append(self.listbox_increments_selceted.get(int(i.split()[1])))  # i=="increment 0"
+            global_vars_storage.material_range = _range[:]
+        elif option == "Range":
+            start = int(self.entry_mat_start.get())
+            end = int(self.entry_mat_end.get())
+            _range = (x for x in range(start, end))
+            global_vars_storage.material_range = range(start, end)
+        else:
+            _range = (x for x in range(0, global_vars_storage.values_counter))
+            global_vars_storage.material_range = _range
 
     def create_save_file(self):
         _options = {'mustexist': False, 'parent': self.parent}
@@ -314,16 +352,35 @@ class StartPage(Page):
         print u"Creating files."
 
         self.get_selected_vars()
+        self.get_range_inc_mat()
 
-        save_out.create_file()
+        # TODO: add create file method to odb_reader
 
     def refresh(self):
+
         self.create_listbox_values(
             self.listbox_steps, [u"Step: %s" % x for x in range(global_vars_storage.steps)], exportselection=0)
 
         self.create_listbox_values(self.listbox_output_2D, global_vars_storage.vars2D, width=15, height=10)
 
         self.create_listbox_values(self.listbox_output_3D, global_vars_storage.vars3D, width=15, height=10)
+
+    def clear_widgets(self):
+        self.listbox_steps.delete(0, tk.END)
+        self.listbox_output_2D.delete(0, tk.END)
+        self.listbox_output_3D.delete(0, tk.END)
+
+    def get_file_path(self):
+        self.entry_odb_path.delete(0, tk.END)
+        path = tkFileDialog.askopenfilename(parent=self.parent, filetypes=[("ODB files", "*.odb")])
+        self.entry_odb_path.insert(tk.END, path)
+        config.odb_fullpath = path
+        config.odb_path, config.odb_name = os.path.split(path)
+
+    def open_odb_file(self):
+        odb_reader.odb_path = config.odb_path
+        odb_reader.odb_name = config.odb_name
+        odb_reader.collect_gui_variables()
 
 
 class OptionPage(Page):
@@ -334,35 +391,3 @@ class OptionPage(Page):
 
         self.frame_main = tk.LabelFrame(self, text="Location")
         self.frame_main.pack()
-
-        self.button_save_location = tk.Button(self.frame_main, text="Get ODB", command=lambda: self.get_file_path())
-        self.button_save_location.grid(row=0, column=0, sticky="we")
-
-        self.entry_odb_path = tk.Entry(self.frame_main, width=50)
-        self.entry_odb_path.grid(row=0, column=1, sticky="we")
-
-        self.button_StartPage = tk.Button(self.frame_main, text="Save ODB location",
-                                          command=lambda: self.show_start_page())
-        self.button_StartPage.grid(row=1, column=0, columnspan=2, sticky='we')
-
-        self.text_area = tk.Text(self.frame_main)
-        self.text_area.grid(row=2, column=0, columnspan=2, sticky='we')
-
-    def get_file_path(self):
-        path = tkFileDialog.askopenfilename(parent=self.parent, filetypes=[("ODB files", "*.odb")])
-        self.entry_odb_path.insert(tk.END, path)
-        config.odb_fullpath = path
-        config.odb_path, config.odb_name = os.path.split(path)
-
-    def show_start_page(self):
-        try:
-            odbFile = session.openOdb(name=str(os.path.join(config.odb_path, config.odb_name)))
-        except Exception as e:
-            tkMessageBox.showerror("Invalid ODB", "This file is corrupted or it is not ODB file.\n"
-                                                  "Please, submit valid file!\n\n"
-                                                  "ErrorDetails: %s" % e)
-            return None
-        else:
-            odb = OdbFile(odbFile)
-            odb.update_global_storage()
-            self.controller.show_refreshed_frame("StartPage")

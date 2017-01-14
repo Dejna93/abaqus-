@@ -1,136 +1,60 @@
 import os
-import threading
 import tkMessageBox
-import multiprocessing
-
-from plugin.odb_scripts.save_file import save_file
-
 from plugin.settings import config
 from plugin.settings import global_vars_storage
 
+from abaqus import *
+from odbAccess import openOdb
+import visualization
 
-class OdbFile(object):
-    def __init__(self, odbFile, *args, **kwargs):
-        for key, value in kwargs.items():
-            self.__dict__[key] = value
 
-        self.odb = odbFile
-        self.parts = {}
-        self.max_step = 0
-        self.increments_counter = 0
-        self.elements_counter = 0
-        self.output2D_variables = []
-        self.output3D_variables = []
+class Singleton(type):
+    _instances = {}
 
-        self.valuesCounter = ''
-        self.frameCounter = 0
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class OdbReader(object):
+    __metaclass__ = Singleton
+
+    def __init__(self):
+        self.odb_name = ""
+        self.odb_path = ""
+
+    def __str__(self):
+        return "OdbFile: %s" % self.odb_name
 
     def __unicode__(self):
-        return str("File name: %s" % config.odb_name)
+        return "OdbFile: %s" % self.odb_name
 
-    def collect_variables(self):
-        values = self.odb.steps.values()
-        """
-            This function will try to get all avaliavle
-            variables from odbfile and update gui.
-        """
-        for var in global_vars_storage._vars2D:
-            try:
-                temp = values[0].frames[0].fieldOutputs[var]
-            except Exception:
-                continue
-            else:
-                self.output2D_variables.append(var)
+    def get_odb(self):
+        try:
+            odbFile = openOdb(name=str(os.path.join(self.odb_path, self.odb_name)), readOnly=True)
+        except Exception as e:
+            tkMessageBox.showerror("Invalid ODB", "This file is corrupted or it is not ODB file.\n"
+                                                  "Please, submit valid file!\n\n"
+                                                  "ErrorDetails: %s" % e)
+            return None
+        else:
+            return odbFile
 
-        for var in global_vars_storage._vars3D:
-            try:
-                temp = values[0].frames[0].fieldOutputs[var]
-            except Exception:
-                continue
-            else:
-                self.output3D_variables.append(var)
-
-        self.max_step = len(self.odb.steps)
-
-        self.valuesCounter = self.odb.steps.values()
-        self.frameCounter = len(values[0].frames)
-
-    def get_parts(self):
-        for key, value in self.odb.steps.items():
-            self.parts[key] = value
-        return self.parts
-
-    def update_global_storage(self):
-        """
-        :return: Update global variables storage
-        """
+    def collect_gui_variables(self):
+        # odb_file = self.get_odb()
         storage = global_vars_storage
-        self.collect_variables()
-        storage.parts = self.get_parts()
-        storage.steps = self.max_step
-        storage.vars2D = self.output2D_variables
-        storage.vars3D = self.output3D_variables
-        storage.frameCounter = self.frameCounter
-        storage.odb = self.odb
-        storage.values = storage.odb.steps.values()
-        storage.values_counter = len(storage.values[0].frames[0].fieldOutputs["S"].values)
+        odb_file = session.openOdb(name=str(os.path.join(self.odb_path, self.odb_name)), readOnly=True)
+        # storage.frameCounter = len(odb_file.steps.values()[0].frames)
+        # storage.valuesCounter = len(odb_file.steps.values())
 
-class SaveOutput(object):
-    def __init__(self):
-        self.output_files = []
+        storage.vars_2D = set(list(odb_file.steps.values()[0].frames[0].fieldOutputs.keys())) & set(global_vars_storage._vars2D)
+        storage.vars_3D = set(list(odb_file.steps.values()[0].frames[0].fieldOutputs.keys())) & set(global_vars_storage._vars3D)
 
-        self.materials_txt_file = ''
-        self.increments_txt_file = ''
+        storage.steps = list(str(odb_file.steps.keys()))
+        storage.parts = list(odb_file.rootAssembly.instances.keys())  # This way may can not work :-)
 
-        self.storage = global_vars_storage
+        odb_file.close()
 
-    def create_file(self):
 
-        for i in range(self.storage.frameCounter):
-            self.save_increments(i, self.storage)
-
-        self.save_materials(self.storage)
-
-    def save_increments(self, iter, storage):
-        """
-        :param range: It is for range (framecounter) for every running proces (parallelism)
-        :return: Nothing, it is only save file
-        """
-        values = storage.odb.steps.values()
-        values_dict = {}
-
-        print("Working increment %s" % iter)
-        if storage.selected_vars_kind == "2D":
-            output_dir = os.path.join(config.output_path, config.odb_name.split('.')[0])
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
-            output_file = os.path.join(output_dir, "Increment%s.txt" % iter)
-            with open(output_file, mode='w') as file:
-                for var in storage.vars2D:
-                    values_dict[var] = values[0].frames[iter].fieldOutputs[var]
-                for i in range(0, storage.values_counter):
-                    output_string = '%d' % i
-                    for key, value in values_dict.items():
-                        if key == "S":
-                            output_string += ":%s" % str(value.values[i].elementLabel - 1)
-                            output_string += ":%s" % value.values[i].mises
-                        try:
-                            for j in value.values[i].data:
-                                output_string += ":%s" % j
-
-                    file.write(output_string + '\n')
-            return True
-
-        if storage.selected_vars_kind == "3D":
-            return True
-
-        return False
-
-    def save_materials(self, storage):
-        output_file = os.path.join(config.output_path, "%s\\materials.txt" % config.odb_name)
-        with open(output_file, mode='w') as file:
-            file.write("%s:%s" % (storage.values_counter, storage.frameCounter))
-            for i in range(storage.material_range):
-                file.write("%s:0\n" % i)
-
-save_out = SaveOutput()
+odb_reader = OdbReader()

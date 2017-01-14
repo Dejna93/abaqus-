@@ -1,12 +1,10 @@
-import multiprocessing
-import threading
+import Tkinter as tk
 import tkMessageBox
 
-from plugin.gui.pages_gui import OptionPage
 from plugin.gui.pages_gui import StartPage
-import Tkinter as tk
-
+from plugin.odb_scripts.source import odb_reader
 from plugin.settings import config
+from plugin.settings import global_vars_storage
 
 try:
     from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, wait
@@ -33,13 +31,13 @@ class Core(tk.Tk):
         self.container.grid_columnconfigure(0, weight=1)
         self.frames = {}
 
-        for F in (StartPage, OptionPage):
+        for F in (StartPage,):
             page_name = F.__name__
             frame = F(parent=self.container, controller=self)
             self.frames[page_name] = frame
             frame.grid(row=0, column=0, sticky="nsew")
 
-        self.show_frame("OptionPage")
+        self.show_frame("StartPage")
 
     def show_frame(self, cont):
         frame = self.frames[cont]
@@ -51,18 +49,25 @@ class Core(tk.Tk):
         frame.tkraise()
 
     def quit(self):
-        tk.Tk.destroy()
+        print("Closed GoatSoft")
+        try:
+            print "Cleaning"
+            del global_vars_storage
+            del odb_reader
 
+        except Exception:
+            pass
 
-def run_gui():
-    pool = ThreadPoolExecutor(max_workers=4)
-    pool.submit(start_app())
-    wait(pool)
+        finally:
+            tk.Tk.destroy(self)
+
 
 def start_app():
     app = Core()
     app.minsize(width=config.window_width, height=config.window_height)
+    app.protocol("WM_DELETE_WINDOW", app.quit)
     app.mainloop()
 
+
 if __name__ == '__main__':
-    run_gui()
+    start_app()

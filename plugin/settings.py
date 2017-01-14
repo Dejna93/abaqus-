@@ -1,5 +1,15 @@
+class Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
 
 class Config(object):
+    __metaclass__ = Singleton
+
     def __init__(self, *args, **kwargs):
         for key, value in kwargs.items():
             self.__dict__[key] = value
@@ -17,11 +27,13 @@ class Config(object):
 
 
 class GlobalVarsStorage(object):
+    __metaclass__ = Singleton
+
     def __init__(self, *args, **kwargs):
         for key, value in kwargs.items():
             self.__dict__[key] = value
 
-        self.odb = ''
+        self.odb_path = ''
 
         self._vars2D = ("S", "PEEQ", "EVOL", "SDV121", "U", "T", "UR3", "RF", "RM3")
         self._vars3D = ("T", "D", "S")
@@ -35,17 +47,11 @@ class GlobalVarsStorage(object):
 
         self.parts = {}  # get dict of parts
 
-        self.steps = 0
+        self.steps = ""
+        self.parts = ""
 
-        self.values = 0
-
-        self.values_counter = 0
-        self.elements_counter = 0
-        self.frameCounter = 0
-        self.parts = {}
-
-        self.increments = [0, self.values_counter]
-        self.material_range = [0, self.values_counter]
+        self.increments_range = 0
+        self.material_range = 0
 
 config = Config()
 global_vars_storage = GlobalVarsStorage()
