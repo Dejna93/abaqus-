@@ -87,7 +87,7 @@ class ConfigPage(tk.Frame):
     def initOptions(self):
         self.fileopt = options = {}
         options['defaultextension'] = '.txt'
-        options['filetypes'] = [('text files', '.txt'), ('Csv files', '.csv'), ('Point cloud data', '.pcd')]
+        options['filetypes'] = [('text files', '.txt'), ('Csv files', '.csv'), ('Point cloud data', '.pcd'), ('STL files', '.stl')]
         options['initialdir'] = global_vars.current_project if global_vars.current_project !='' and global_vars.current_project != global_vars.workspace_dir else global_vars.workspace_dir
         options['initialfile'] = ''
         options['parent'] = self
@@ -225,22 +225,32 @@ class ConfigPage(tk.Frame):
         else:
             add_file = tkFileDialog.askopenfilename(**self.fileopt)
             if add_file != '':
-                if not os.path.exists(join(global_vars.project_points_folder, os.path.split(add_file)[1])):
+                folder_dst = global_vars.project_points_folder if global_vars.current_filename[-3:] != 'stl' else global_vars.project_stl_folder
+
+                if not os.path.exists(join(folder_dst, os.path.split(add_file)[1])):
                     # print "Coping " + add_file +" to " + global_vars.project_points_folder + "/"+self.get_filename_from_path(add_file)
+
                     copy2(add_file, global_vars.project_points_folder)
-                    global_vars.current_filename = join(global_vars.project_points_folder,
-                                                        self.get_filename_from_path(add_file)).replace("\\", "/")
+                    add_file = join(folder_dst, self.get_filename_from_path(add_file)).replace("\\", "/")
                 else:
-                    print global_vars.project_points_folder
-                    global_vars.current_filename = join(global_vars.project_points_folder,
-                                                        os.path.split(add_file)[1]).replace("\\", "/")
+                    add_file = join(folder_dst,os.path.split(add_file)[1]).replace("\\", "/")
 
-                if global_vars.current_filename:
-                    if not global_vars.current_filename in global_vars.files_opened:
-                        global_vars.files_opened.append(global_vars.current_filename)
+                if add_file and add_file[-3:] != 'stl' :
+                    if not add_file in global_vars.files_opened:
+                        global_vars.files_opened.append(add_file)
+                        self.set_entry(add_file)
+                        self.txt_list.insert(0, self.get_filename_from_path(add_file))
+                else:
+                    if not add_file in global_vars.created_stl:
+                        global_vars.created_stl.append(add_file)
+                        self.set_entry(add_file)
+                        self.stlList.insert(0, self.get_filename_from_path(add_file))
 
-                self.set_entry(global_vars.current_filename)
-                self.txt_list.insert(0, self.get_filename_from_path(global_vars.current_filename))
+                global_vars.current_filename = add_file if add_file[-3:] != 'stl' else ''
+                global_vars.current_stl = add_file if add_file[-3:] =='stl' else ''
+
+                #self.set_entry(global_vars.current_filename)
+                #self.txt_list.insert(0, self.get_filename_from_path(global_vars.current_filename))
             else:
                 showerror("Nie wybrano pliku", "Prosze wskazać plik do otwarcia")
     def get_filename_from_path(self, filepath):
@@ -294,13 +304,16 @@ class STLPage(tk.Frame):
         self.pcdFrame = tk.LabelFrame(self, text="PCD Files", width=global_vars.dlab_width, padx=10, pady=10)
         self.pcdFrame.grid(row=1, column=0, sticky="WE", padx=10, pady=10)
         # LABELS STL
-        label_1 = tk.Label(labelFrame, text="setMaximumNearestNeighbors")
-        label_2 = tk.Label(labelFrame, text="setMu")
-        label_3 = tk.Label(labelFrame, text="setSearchRadius")
-        label_4 = tk.Label(labelFrame, text="setMinimumAngle")
-        label_5 = tk.Label(labelFrame, text="setMaximumAngle")
-        label_6 = tk.Label(labelFrame, text="setMaximumSurfaceAgle")
-        label_7 = tk.Label(labelFrame, text="setNormalConsistency")
+        text_labels = [
+            "setMaximumNearestNeighbors",
+            "setMu",
+            "setSearchRadius",
+            "setMinimumAngle",
+            "setMaximumAngle",
+            "setMaximumSurfaceAgle",
+            "setNormalConsistency"
+        ]
+        self.labels = []
 
         initialVars = (0.025, 2.5, 100, pi / 4, pi / 18, 2 * pi / 3, 0)
         self.checkInt = tk.IntVar()
@@ -317,19 +330,12 @@ class STLPage(tk.Frame):
         pcd_scrollbar.grid(row=1, column=1, sticky="E")
 
         # GRID
-        label_1.grid(row=1, column=0, sticky="W")
-        label_2.grid(row=2, column=0, sticky="W")
-        label_3.grid(row=3, column=0, sticky="W")
-        label_4.grid(row=4, column=0, sticky="W")
-        label_5.grid(row=5, column=0, sticky="W")
-        label_6.grid(row=6, column=0, sticky="W")
-        label_7.grid(row=7, column=0, sticky="W")
-
         label_pcd.grid(row=0, column=0, sticky="W")
         # DEF Entry
         self.entires = []
         for i in range(0, 7):
-            print i
+            self.labels.append(tk.Label(labelFrame, text=text_labels[i]))
+            self.labels[i].grid(row=i + 1, column=0, sticky="W")
             if i <= 5:
                 self.entires.append(tk.Entry(labelFrame))
                 self.entires[i].insert(tk.END, initialVars[i])
@@ -351,6 +357,8 @@ class STLPage(tk.Frame):
         button_1.grid(row=9, column=2, sticky="W")
         button_2.grid(row=9, column=3, sticky="E")
 
+        self.update()
+
     def delete(self):
         if self.pcd_list.curselection():
             print self.pcd_list.curselection()
@@ -363,13 +371,14 @@ class STLPage(tk.Frame):
 
     def update_list(self):
         self.pcd_list.delete(0 , tk.END)
-        print global_vars.created_pcd
         if global_vars.created_pcd:
             for item in global_vars.created_pcd:
                 self.pcd_list.insert(tk.END, '/'.join(item.split('/')[-4:]))
 
     def update(self):
         self.update_list()
+        self.after(1000,self.update)
+
 
     def stl_run(self):
         # file_list = self.pcd_list.curselection()

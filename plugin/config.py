@@ -52,7 +52,7 @@ class PluginConfig(object):
             self.icon = ''
             self.ico_btn_open =''
 
-        self.files_selected = []
+
         self.files_opened = []
         self.current_filename = ''
         self.created_stl = []
@@ -194,7 +194,18 @@ class PluginConfig(object):
         #self.project_points_folder = os.path.join(self.current_project, "points").replace("\\","/")
         #self.project_stl_folder = os.path.join(self.current_project, "stl").replace("\\","/")
         print "UPDATE_DIR" + self.current_project
+
+
+    def add_project(self):
+        self.current_filename = ''
+        self.current_stl = ''
+        self.current_stl = ''
+        self.created_pcd = []
+        self.created_stl = []
+        self.files_opened = []
+
+
 global_vars = PluginConfig()
-print "wtedy"
+
 
 

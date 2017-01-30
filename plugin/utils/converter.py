@@ -17,17 +17,22 @@ def convert_txt_to_pcd(filename):
     return filename
 
 
-def convert_csv_to_pcd(filename):
+def convert_csv_to_pcd(filename, type='T'):
     data = {}
     with open(filename,'r') as file:
         try:
             csv_reader = csv.reader(file)
             for row in csv_reader:
-                temp = list(row)
-                if temp[-1] in data:
-                    data[temp[-1]].append(temp[0:3])
+                if type == 'T':
+                    temp = list(row)
+                    if temp[-1] in data:
+                        data[temp[-1]].append(temp[0:3])
+                    else:
+                        data[temp[-1]] = [temp[0:3]]
                 else:
-                    data[temp[-1]] = [temp[0:3]]
+                    temp = list(row)
+                    data["0"].append(temp[0:3])
+
         finally:
             file.close()
         if data:

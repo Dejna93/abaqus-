@@ -2,7 +2,7 @@
 import os
 import tkFileDialog
 from ..config import global_vars
-
+from plugin.utils.inputs import join
 def add_project(root):
     dir_opt = options = {}
     options['initialdir'] = global_vars.workspace_dir
@@ -14,6 +14,11 @@ def add_project(root):
 
     if folder:
         global_vars.update_project_dir(folder)
+        create_folder(join(folder , "points"))
+        create_folder(join(folder, "points"))
+        global_vars.add_project()
+        global_vars.init_project()
+        root.update()
     if not folder:
         raise ValueError("Wybierz folder")
 
@@ -35,9 +40,15 @@ def open_project(root):
 
     if folder:
         global_vars.update_project_dir(folder)
+        global_vars.init_project()
+        root.update()
     if not folder:
         raise ValueError("Wybierz folder")
 
+
+def clear_project(root):
+    #TODO CLEAR PROJECT FUN
+    1
 
 
 
