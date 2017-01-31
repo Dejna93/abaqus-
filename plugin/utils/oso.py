@@ -19,3 +19,21 @@ def get_filename_from_path( filepath):
     import ntpath
     head, tail = ntpath.split(filepath)
     return tail
+
+def get(list , i):
+    try:
+        return list[i]
+    except IndexError:
+        return None
+
+def get_selection(list , i):
+    try:
+        return list[i]
+    except IndexError:
+        return 0
+
+def clean_path(path):
+    if platform.system() == 'Windows':
+        return path.replace("\\", "/")
+    else:
+        return path.replace("//", "/")

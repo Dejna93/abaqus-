@@ -2,7 +2,7 @@
 import Tkinter as tk
 from stlOper import FileOperation
 
-from plugin.utils.project import add_project, open_project, clear_project
+from plugin.utils.project import Project , add_project, open_project, clear_project
 from plugin.config import global_vars
 
 # pages
@@ -28,9 +28,8 @@ class App(tk.Tk):
 
         self.menubar = tk.Menu(self)
         self.file_menu = tk.Menu(self.menubar, tearoff=0)
-        self.file_menu.add_command(label="New Project", command=lambda: add_project(root=self))
-        self.file_menu.add_command(label="Open Project", command=lambda: open_project(root=self))
-        self.file_menu.add_command(label="Clear Project", command=lambda: clear_project(root=self))
+        self.file_menu.add_command(label="New Project", command= Project.menu_add_project )
+        self.file_menu.add_command(label="Clear Project", command= Project.clear_project )
         self.file_menu.add_command(label="Exit")
         self.menubar.add_cascade(label="Project", menu=self.file_menu)
         self.config(menu=self.menubar)

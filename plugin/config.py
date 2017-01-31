@@ -1,4 +1,5 @@
 from __future__ import with_statement
+from collections import Iterable
 import os
 from sys import version
 
@@ -68,7 +69,7 @@ class PluginConfig(object):
         self.setup_workspace()
         self.init_project()
 
-        self.title = "Import Mesh to Abaqus" + " - Project -" + '/'.join(self.current_project.split('/')[-4:])
+        self.title = "Import Mesh to Abaqus - Project -"
 
     def setup_workspace(self):
         try:
@@ -204,6 +205,50 @@ class PluginConfig(object):
         self.created_stl = []
         self.files_opened = []
 
+    def get_filename_from_path(self, filepath):
+        import ntpath
+        head, tail = ntpath.split(filepath)
+        return tail
+
+    def is_same_list(self, list , build_list):
+        for item in build_list:
+            if not self.contains(item, list):
+                return False
+        return True
+
+    # ONLY FOR TRANSLATE LISTBOX TO LIST
+    def contains(self, name, list):
+        for item in list:
+            if name == item:
+                return True
+        return False
+
+    def get_items(self, list ,build_list):
+        new_list = []
+        for item in build_list:
+            if not self.contains(item , list):
+                new_list.append(item)
+        return new_list
+
+
+    def update_project_params(self,project):
+        self.current_project = project
+        self.project_points_folder =  join(self.current_project,"points")
+        self.project_stl_folder = join(self.current_project,"stl")
+
+    def update_point_files(self, points_files):
+        #nadgraj obecne pliki
+        if isinstance(points_files , Iterable):
+            self.files_opened = []
+            for file in points_files:
+                if not file[-3:] in ('stl', 'pcd'):
+                    self.files_opened.append(file)
+            #self.files_opened = points_files
+
+    def update_stl_files(self, stl_files):
+
+        if isinstance(stl_files, Iterable):
+            self.created_stl = stl_files
 
 global_vars = PluginConfig()
 

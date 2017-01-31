@@ -11,13 +11,23 @@ from plugin.config import global_vars
 from plugin.utils.project import open_project
 from plugin.utils.converter import convert_txt_to_pcd, convert_csv_to_pcd
 from plugin.utils.inputs import input_validator
-from plugin.utils.oso import join , change_ext , get_filename_from_path
+from plugin.utils.oso import join , change_ext , get_filename_from_path, get , get_selection
 
+__metaclass__ = type
 
-class StartPage(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+class Page(tk.Frame, object):
+    def __init__(self, parent ):
+        tk.Frame.__init__(self,parent)
         self.parent = parent
+
+    def update(self):
+        self.after(1000, self.update)
+
+class StartPage(Page):
+    def __init__(self, parent, controller):
+        Page.__init__(self, parent)
+        self.parent = parent
+        self.controller = controller
 
         about = """
         //PL
@@ -58,12 +68,14 @@ class StartPage(tk.Frame):
 
 
     def update(self):
-        print "update"
+
+        super(StartPage,self).update()
 
 
-class ConfigPage(tk.Frame):
+
+class ConfigPage(Page):
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+        Page.__init__(self, parent)
         self.parent = parent
         self.controller = controller
         # global_vars.dump_vars()
@@ -127,7 +139,7 @@ class ConfigPage(tk.Frame):
     def initScrollList(self):
 
         self.scrollbar = tk.Scrollbar(self.labelFrame_3)
-        self.stlList = tk.Listbox(self.labelFrame_3, yscrollcommand=self.scrollbar.set, width=30)
+        self.stlList = tk.Listbox(self.labelFrame_3, yscrollcommand=self.scrollbar.set)
         # self.stlList = FileList(self.labelFrame_3, yscrollcommand=self.scrollbar.set, width=50)
         self.stlList.bind("<FocusIn>", self.stl_focused)
         self.stlList.bind("<FocusOut>", self.stl_unfocused)
@@ -138,15 +150,17 @@ class ConfigPage(tk.Frame):
     def initTxtScrollList(self):
 
         self.txt_scrollbar = tk.Scrollbar(self.labelFrame_3)
-        self.txt_list = tk.Listbox(self.labelFrame_3, yscrollcommand=self.txt_scrollbar.set,
-                                   width=30)
+        self.txt_list = tk.Listbox(self.labelFrame_3,listvariable=global_vars.files_opened,
+                                   yscrollcommand=self.txt_scrollbar.set
+                                   ,width=90)
         self.txt_scrollbar.config(command=self.txt_list.yview)
         self.txt_list.bind("<FocusIn>", self.box_focused)
         self.txt_list.bind("<FocusOut>", self.box_unfocused)
         self.txt_list.bind("<Double-Button-1>", self.select_item)
-        if global_vars.files_opened:
+        if len(global_vars.files_opened) != 0:
             for files in global_vars.files_opened:
-                self.txt_list.insert(0, self.get_filename_from_path(files))
+                self.txt_list.insert(tk.END,files)
+
 
     def manageGrid(self):
         self.labelFrame_1.grid(row=0, columnspan=8, sticky='WE', padx=10, pady=10)
@@ -160,14 +174,14 @@ class ConfigPage(tk.Frame):
         self.btn_1.grid(row=1, column=3, sticky="W", padx=10)
         self.btn_3.grid(row=3, column=5, sticky="W", padx=5)
         self.btn_4.grid(row=3, column=7, sticky="W", padx=20)
-        self.btn_del.grid(row=5, column=5, sticky="E", padx=10)
+        self.btn_del.grid(row=7, column=1, sticky="E", padx=10)
         # ----------
-        self.scrollbar.grid(rowspan=2, row=5, column=4, sticky="WE")
-        self.stlList.columnconfigure(0, weight=1)
-        self.stlList.grid(row=5, column=3, sticky="WE", padx=10, pady=10)
+        self.scrollbar.grid(row=6, column=11, sticky="WE")
+      #  self.stlList.columnconfigure(0, weight=1)
+        self.stlList.grid(row=6, column=0,columnspan=10, sticky="WE", padx=10, pady=10)
 
-        self.txt_scrollbar.grid(row=5, column=1, sticky="WE")
-        self.txt_list.grid(row=5, column=2, sticky="WE", padx=10, pady=10)
+        self.txt_scrollbar.grid(row=5, column=11, sticky="WE")
+        self.txt_list.grid(row=5, column=0,columnspan=10, sticky="WE", padx=10, pady=10)
         # ---------
         self.entry_1.grid(row=1, column=2, sticky="E", padx=10)
 
@@ -185,6 +199,7 @@ class ConfigPage(tk.Frame):
 
     def select_item(self, event):
         if self.focus_txt:
+            print "select_item"
             widget = event.widget
             if widget.curselection():
                 global_vars.update_currentfile(widget.get(widget.curselection()[0]))
@@ -239,12 +254,12 @@ class ConfigPage(tk.Frame):
                     if not add_file in global_vars.files_opened:
                         global_vars.files_opened.append(add_file)
                         self.set_entry(add_file)
-                        self.txt_list.insert(0, self.get_filename_from_path(add_file))
+                        self.txt_list.insert(0, add_file)
                 else:
                     if not add_file in global_vars.created_stl:
                         global_vars.created_stl.append(add_file)
                         self.set_entry(add_file)
-                        self.stlList.insert(0, self.get_filename_from_path(add_file))
+                        #self.stlList.insert(0, self.get_filename_from_path(add_file))
 
                 global_vars.current_filename = add_file if add_file[-3:] != 'stl' else ''
                 global_vars.current_stl = add_file if add_file[-3:] =='stl' else ''
@@ -275,22 +290,34 @@ class ConfigPage(tk.Frame):
             controller.show_frame("STLPage")
 
     def to_abaqus(self):
-        print global_vars.current_stl
-
         self.controller.show_frame("AbaqusPage")
 
 
-    def opennew(self):
-        print "opening"
-
     def update(self):
-        self.stlList.delete(0,tk.END)
-        self.txt_list.delete(0,tk.END)
-        for item in global_vars.files_opened:
-            self.txt_list.insert(tk.END,self.get_filename_from_path(item))
-        for item in global_vars.created_stl:
-            print "update "+self.get_filename_from_path(item)
-            self.stlList.insert(tk.END,self.get_filename_from_path(item))
+        self.update_list()
+        if self.focus_txt:
+            print "focus _txt"
+            self.txt_list.selection_set(get_selection(self.txt_list.curselection(), 0))
+        if self.focus_stl:
+            print "focus stl"
+            self.stlList.selection_set(get_selection(self.stlList.curselection() ,0))
+        super(ConfigPage,self).update()
+
+    def update_list(self):
+        if not global_vars.is_same_list(self.txt_list.get(0,tk.END) , global_vars.files_opened):
+            print "update list"
+            self.txt_list.delete(0,tk.END)
+            for item in global_vars.files_opened:
+                self.txt_list.insert(tk.END,item)
+            #self.txt_list.selection_set(0)
+
+        if not global_vars.is_same_list(self.stlList.get(0, tk.END), global_vars.files_opened):
+            self.stlList.delete(0, tk.END)
+            for item in global_vars.created_stl:
+                self.stlList.insert(tk.END, item)
+
+    def update_title(self):
+        self.controller.wm_title(global_vars.title +  '/'.join(global_vars.current_project.split('/')[-4:]))
 
 
 
